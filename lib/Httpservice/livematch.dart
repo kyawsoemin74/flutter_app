@@ -17,12 +17,13 @@ class HttpLivematch {
       final ReceivePort receivePort = ReceivePort();
       // var data = await footballApiPlugin.getlivematch;
       var data = await ApiHelp.get(ENDPOINTURL: AppConfig.matchesLiveEndpoint);
+      print("API Response Body: ${data.body}"); // Data ပါမပါ ဒီမှာ အရင်စစ်ပါ
       var match = matchlistFromJson(data.body);
       await Isolate.spawn(
           matchfilterbyleague, [receivePort.sendPort, match, null]);
       leaguelive = await receivePort.first as List<Leaguematch>;
     } catch (e) {
-      print(e.toString());
+      print("HttpLivematch getlivematch Error: ${e.toString()}");
     }
     return leaguelive;
   }

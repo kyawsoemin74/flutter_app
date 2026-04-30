@@ -62,9 +62,9 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
                         context,
                         MaterialPageRoute(
                           builder: ((context) => LeaguedetailsPage(
-                                leagueid: data1.allmatch!.first.league!.id!,
-                                season: data1.allmatch!.first.league!.season!,
-                                leaguename: data1.allmatch!.first.league!.name!,
+                                leagueid: data1.allmatch!.first.leagueId ?? 0, // Use leagueId
+                                season: AppConfig.defaultSeason, // Season is not in the new flat model
+                                leaguename: data1.allmatch!.first.leagueName ?? "", // Use leagueName
                               )),
                         ),
                       );
@@ -76,7 +76,7 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
                       color: AppConfig.glassEffectColor,
                       ),
                       child: Text(
-                        "${data1.allmatch!.first.league!.name!} - ${data1.allmatch!.first.league!.country}",
+                        "${data1.allmatch!.first.leagueName ?? ""} - ${data1.allmatch!.first.country ?? ""}", // Use leagueName and country
                         style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 17,
@@ -106,9 +106,9 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => DetailsPage(
-                                    fictureid: data.fixture!.id!,
-                                    team1: data.teams!.home['id'],
-                                    team2: data.teams!.away['id']),
+                                    fictureid: data.matchId ?? 0, // Use matchId
+                                    team1: 0, // team ID is not in the new flat model
+                                    team2: 0), // team ID is not in the new flat model
                               ));
                         },
                         child: Container(
@@ -124,7 +124,7 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
                                       SizedBox(
                                         width: 70,
                                         child: Text(
-                                          data.teams!.home['name'],
+                                          data.homeTeam ?? "", // Use homeTeam
                                           maxLines: 1,
                                           textAlign: TextAlign.right,
                                           style: const TextStyle(
@@ -136,14 +136,14 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
                                         width: 25,
                                         height: 25,
                                         child: Image.network(
-                                          data.teams!.home['logo'],
+                                          data.homeLogo ?? "", // Use homeLogo
                                           height: 30,
                                           fit: BoxFit.cover,
                                         ),
                                       )
                                     ],
                                   )),
-                              if (data.fixture!.status!.short != "FT")
+                              if (data.status != "FT") // Use status
                                 Expanded(
                                     flex: 1,
                                     child: Column(
@@ -151,21 +151,18 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
                                           MainAxisAlignment.spaceEvenly,
                                       children: [
                                         Text(
-                                          DateFormat('hh:mm a').format(DateTime
-                                              .fromMicrosecondsSinceEpoch(
-                                                  data.fixture!.timestamp! *
-                                                      1000000)),
+                                          data.matchTime != null // Use matchTime
+                                              ? DateFormat('hh:mm a').format(data.matchTime!)
+                                              : "--:--",
                                           style: const TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
                                               color: Colors.white),
                                         ),
                                         Text(
-                                          DateFormat('dd MMM, yyyy').format(
-                                              DateTime
-                                                  .fromMicrosecondsSinceEpoch(
-                                                      data.fixture!.timestamp! *
-                                                          1000000)),
+                                          data.matchTime != null // Use matchTime
+                                              ? DateFormat('dd MMM, yyyy').format(data.matchTime!)
+                                              : "",
                                           style: const TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
@@ -173,19 +170,19 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
                                         )
                                       ],
                                     )),
-                              if (data.fixture!.status!.short == "FT")
+                              if (data.status == "FT") // Use status
                                 Expanded(
                                   child: Column(
                                     children: [
                                       Text(
-                                        "${data.goals!.home ?? 0} : ${data.goals!.away ?? 0}",
+                                        data.score ?? "0 : 0", // Use score
                                         style: TextStyle(
                                             fontSize: 17.sp,
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold),
                                       ),
                                       Text(
-                                        data.fixture!.status!.long!,
+                                        data.status ?? "", // Use status
                                         style: TextStyle(
                                             color: Colors.green,
                                             fontSize: 12.sp),
@@ -202,7 +199,7 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
                                         width: 25,
                                         height: 25,
                                         child: Image.network(
-                                          data.teams!.away['logo'],
+                                          data.awayLogo ?? "", // Use awayLogo
                                           height: 30,
                                           fit: BoxFit.cover,
                                         ),
@@ -211,7 +208,7 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
                                       SizedBox(
                                         width: 70,
                                         child: Text(
-                                          data.teams!.away['name'],
+                                          data.awayTeam ?? "", // Use awayTeam
                                           maxLines: 1,
                                           textAlign: TextAlign.start,
                                           style: const TextStyle(

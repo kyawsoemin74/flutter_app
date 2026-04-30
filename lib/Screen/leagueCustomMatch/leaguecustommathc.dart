@@ -104,15 +104,15 @@ class _LeagueCustomMatchState extends State<LeagueCustomMatch> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     if (index != 0)
-                                      CircleAvatar(
+                                      CircleAvatar( // Changed to use leagueLogo
                                         backgroundColor: Colors.transparent,
                                         backgroundImage: NetworkImage(
-                                            data.allmatch!.first.league!.logo!),
+                                            data.allmatch!.first.leagueLogo ?? ""),
                                         radius: 15.r,
                                       ),
                                     if (index != 0)
                                       Text(
-                                        data.allmatch!.first.league!.name!,
+                                        data.allmatch!.first.leagueName ?? "",
                                         style: const TextStyle(
                                             color: Colors.white),
                                       ),
@@ -143,9 +143,9 @@ class _LeagueCustomMatchState extends State<LeagueCustomMatch> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => DetailsPage(
-                                        fictureid: data.fixture!.id!,
-                                        team1: data.teams!.away['id'],
-                                        team2: data.teams!.home['id']),
+                                        fictureid: data.matchId ?? 0, // Use matchId
+                                        team1: 0, // team ID is not in the new flat model
+                                        team2: 0), // team ID is not in the new flat model
                                   ));
                             },
                             child: Container(
@@ -169,7 +169,7 @@ class _LeagueCustomMatchState extends State<LeagueCustomMatch> {
                                         borderRadius:
                                             BorderRadius.circular(50)),
                                     child: Text(
-                                      data.fixture!.status!.long!,
+                                      data.status ?? "", // Use status
                                       style: TextStyle(
                                           fontSize: 10.sp, color: Colors.white),
                                     ),
@@ -182,15 +182,15 @@ class _LeagueCustomMatchState extends State<LeagueCustomMatch> {
                                       SizedBox(
                                         height: 35.h,
                                         width: 35.h,
-                                        child: Image.network(
-                                            data.teams!.home['logo'],
+                                        child: Image.network( // Use homeLogo
+                                            data.homeLogo ?? "",
                                             height: 40),
                                       ),
                                       SizedBox(
                                         height: 35.h,
                                         width: 35.h,
-                                        child: Image.network(
-                                          data.teams!.away['logo'],
+                                        child: Image.network( // Use awayLogo
+                                          data.awayLogo ?? "",
                                         ),
                                       ),
                                     ],
@@ -204,13 +204,13 @@ class _LeagueCustomMatchState extends State<LeagueCustomMatch> {
                                           width: 80.w,
                                           height: 20.h,
                                           child: Text(
-                                            data.teams!.home['name'],
+                                            data.homeTeam ?? "", // Use homeTeam
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
                                                 color: Colors.white),
                                           )),
                                       Text(
-                                        "${data.goals!.home ?? "0"}",
+                                        data.score?.split('-')[0].trim() ?? "0", // Extract home score from score string
                                         style: const TextStyle(
                                             color: Colors.white),
                                       )
@@ -224,13 +224,13 @@ class _LeagueCustomMatchState extends State<LeagueCustomMatch> {
                                           width: 80.w,
                                           height: 20.h,
                                           child: Text(
-                                            data.teams!.away['name'],
+                                            data.awayTeam ?? "", // Use awayTeam
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
                                                 color: Colors.white),
                                           )),
                                       Text(
-                                        "${data.goals!.away ?? 0}",
+                                        data.score?.split('-')[1].trim() ?? "0", // Extract away score from score string
                                         style: const TextStyle(
                                             color: Colors.white),
                                       )

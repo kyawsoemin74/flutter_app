@@ -27,11 +27,11 @@ class AppConfig {
   static int defaultSeason = 2022;
 
   // Endpoints path များရှိပါက ဒီမှာ ဆက်လက်ထည့်နိုင်သည်
-  static const String matchesEndpoint = "/matches/";
+  static const String matchesEndpoint = "/matches";
   static const String matchesLiveEndpoint = "/matches/live"; // Error log အတိုင်း အမည်ပြောင်းလဲပေးထားသည်
 
   // Dynamic date matches အတွက် endpoint helper
-  static String matchesByDateEndpoint(String date) => "/matches/$date";
+  static String matchesByDateEndpoint(String date) => "$matchesEndpoint/$date";
   
   static const String leaguesEndpoint = "/leagues";
   static const String standingsEndpoint = "/standings"; // Standing data အတွက် endpoint အသစ်ထည့်သွင်းသည်
@@ -100,23 +100,25 @@ matchfilterbyleague(List<dynamic> args) {
   var status = args[2];
 
   for (var i = 0; i < matchlist.length; i++) {
-    if (leagueid.contains(matchlist[i].league!.id) == false) {
-      leagueid.add(matchlist[i].league!.id!);
+    if (matchlist[i].leagueId != null) {
+      if (!leagueid.contains(matchlist[i].leagueId)) {
+        leagueid.add(matchlist[i].leagueId!);
+      }
     }
   }
 
   if (status != null) {
     for (var i = 0; i < leagueid.length; i++) {
-      var data = matchlist.where((element) => element.league!.id == leagueid[i] && element.fixture!.status!.short == status).toList();
+      var data = matchlist.where((element) => element.leagueId == leagueid[i] && element.status == status).toList();
       if (data.isNotEmpty) {
-        leaguematch.add(Leaguematch(leagueid: data.first.league!.id, allmatch: data));
+        leaguematch.add(Leaguematch(leagueid: data.first.leagueId, allmatch: data));
       }
     }
   } else {
     for (var i = 0; i < leagueid.length; i++) {
-      var data = matchlist.where((element) => element.league!.id! == leagueid[i]).toList();
+      var data = matchlist.where((element) => element.leagueId == leagueid[i]).toList();
       if (data.isNotEmpty) {
-        leaguematch.add(Leaguematch(leagueid: data.first.league!.id, allmatch: data));
+        leaguematch.add(Leaguematch(leagueid: data.first.leagueId, allmatch: data));
       }
     }
   }

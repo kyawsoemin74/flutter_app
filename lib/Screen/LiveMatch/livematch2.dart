@@ -65,12 +65,11 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                   context,
                                   MaterialPageRoute(
                                     builder: ((context) => LeaguedetailsPage(
-                                          leagueid:
-                                              data1.allmatch!.first.league!.id!,
-                                          season: data1
-                                              .allmatch!.first.league!.season!,
-                                          leaguename: data1
-                                              .allmatch!.first.league!.name!,
+                                          // Model အသစ်တွင် leagueId, leagueName ကို တိုက်ရိုက်သုံးသည်
+                                          // season field မပါဝင်သေးသဖြင့် AppConfig မှ default ကိုသုံးထားသည်
+                                          leagueid: data1.allmatch!.first.leagueId ?? 0,
+                                          season: AppConfig.defaultSeason,
+                                          leaguename: data1.allmatch!.first.leagueName ?? "",
                                         )),
                                   ),
                                 );
@@ -82,7 +81,7 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                     color: AppConfig.glassEffectColor,
                                 ),
                                 child: Text(
-                                  "${data1.allmatch!.first.league!.name!} - ${data1.allmatch!.first.league!.country}",
+                                  "${data1.allmatch!.first.leagueName ?? ""} - ${data1.allmatch!.first.country ?? ""}",
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 17,
@@ -121,13 +120,12 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                               context,
                                               MaterialPageRoute(
                                                 builder: (context) =>
-                                                    DetailsPage(
-                                                        fictureid:
-                                                            data.fixture!.id!,
-                                                        team1: data
-                                                            .teams!.away['id'],
-                                                        team2: data
-                                                            .teams!.home['id']),
+                                                    DetailsPage( 
+                                                        // matchId ကိုသုံးသည်၊ team id များ model တွင် မပါသဖြင့် 0 ထားသည်
+                                                        fictureid: data.matchId ?? 0,
+                                                        team1: 0,
+                                                        team2: 0,
+                                                    ),
                                               ));
                                         },
                                         child: Container(
@@ -144,8 +142,7 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                                       SizedBox(
                                                         width: 70,
                                                         child: Text(
-                                                          data.teams!
-                                                              .home['name'],
+                                                          data.homeTeam ?? "",
                                                           maxLines: 1,
                                                           textAlign:
                                                               TextAlign.right,
@@ -160,8 +157,7 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                                         width: 25,
                                                         height: 25,
                                                         child: Image.network(
-                                                          data.teams!
-                                                              .home['logo'],
+                                                          data.homeLogo ?? "",
                                                           height: 30,
                                                           fit: BoxFit.cover,
                                                         ),
@@ -176,7 +172,7 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                                             .spaceEvenly,
                                                     children: [
                                                       Text(
-                                                        "${data.goals!.home ?? 0} : ${data.goals!.away ?? 0}",
+                                                        data.score ?? "0 : 0",
                                                         style: TextStyle(
                                                             fontSize: 17.sp,
                                                             color: Colors.white,
@@ -185,7 +181,7 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                                                     .bold),
                                                       ),
                                                       Text(
-                                                        "${data.fixture!.status!.elapsed ?? 0}''",
+                                                        data.status ?? "",
                                                         style: const TextStyle(
                                                             color: Colors.green,
                                                             fontSize: 12),
@@ -202,8 +198,7 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                                       width: 25,
                                                       height: 25,
                                                       child: Image.network(
-                                                        data.teams!
-                                                            .away['logo'],
+                                                        data.awayLogo ?? "",
                                                         height: 30,
                                                         fit: BoxFit.cover,
                                                       ),
@@ -212,8 +207,7 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                                     SizedBox(
                                                       width: 70,
                                                       child: Text(
-                                                        data.teams!
-                                                            .away['name'],
+                                                        data.awayTeam ?? "",
                                                         maxLines: 1,
                                                         textAlign:
                                                             TextAlign.start,

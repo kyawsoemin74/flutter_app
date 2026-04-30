@@ -39,9 +39,9 @@ class _LiveMatchState extends State<LiveMatch> {
                     context,
                     MaterialPageRoute(
                       builder: ((context) => LeaguedetailsPage(
-                            leagueid: data1.allmatch!.first.league!.id!,
-                            season: data1.allmatch!.first.league!.season!,
-                            leaguename: data1.allmatch!.first.league!.name!,
+                            leagueid: data1.allmatch!.first.leagueId ?? 0,
+                            season: AppConfig.defaultSeason,
+                            leaguename: data1.allmatch!.first.leagueName ?? "",
                           )),
                     ),
                   );
@@ -50,10 +50,10 @@ class _LiveMatchState extends State<LiveMatch> {
                   padding: const EdgeInsets.all(8.0),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(5.r),
-                    color: color1,
+                    color: AppConfig.glassEffectColor,
                   ),
                   child: Text(
-                    "${data1.allmatch!.first.league!.name!} - ${data1.allmatch!.first.league!.country}",
+                    "${data1.allmatch!.first.leagueName ?? ""} - ${data1.allmatch!.first.country ?? ""}",
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 17,
@@ -83,15 +83,15 @@ class _LiveMatchState extends State<LiveMatch> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => DetailsPage(
-                              fictureid: data.fixture!.id!,
-                              team1: data.teams!.away['id'],
-                              team2: data.teams!.home['id']),
+                              fictureid: data.matchId ?? 0,
+                              team1: 0,
+                              team2: 0),
                         ),
                       );
                     },
                     child: Container(
                       padding: EdgeInsets.all(10.r),
-                      color: color1,
+                      color: AppConfig.glassEffectColor,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
@@ -105,7 +105,7 @@ class _LiveMatchState extends State<LiveMatch> {
                                       SizedBox(
                                         width: 70.w,
                                         child: Text(
-                                          data.teams!.away['name'],
+                                          data.awayTeam ?? "",
                                           maxLines: 1,
                                           textAlign: TextAlign.right,
                                           style: const TextStyle(
@@ -117,7 +117,7 @@ class _LiveMatchState extends State<LiveMatch> {
                                         width: 25.w,
                                         height: 25.h,
                                         child: Image.network(
-                                          data.teams!.away['logo'],
+                                          data.awayLogo ?? "",
                                           height: 30,
                                           fit: BoxFit.cover,
                                         ),
@@ -131,24 +131,18 @@ class _LiveMatchState extends State<LiveMatch> {
                                         MainAxisAlignment.spaceEvenly,
                                     children: [
                                       Text(
-                                        DateFormat('hh:mm a').format(
-                                            DateTime.fromMicrosecondsSinceEpoch(
-                                                data.fixture!.timestamp! *
-                                                    1000000)),
+                                        data.score ?? "0 - 0",
                                         style: TextStyle(
-                                            fontSize: 18.sp,
+                                            fontSize: 17.sp,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white),
                                       ),
                                       Text(
-                                        DateFormat('dd MMM, yyyy').format(
-                                            DateTime.fromMicrosecondsSinceEpoch(
-                                                data.fixture!.timestamp! *
-                                                    1000000)),
+                                        data.status ?? "",
                                         style: TextStyle(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.white),
+                                            color: Colors.green),
                                       )
                                     ],
                                   )),
@@ -161,7 +155,7 @@ class _LiveMatchState extends State<LiveMatch> {
                                       width: 25.w,
                                       height: 25.h,
                                       child: Image.network(
-                                        data.teams!.home['logo'],
+                                        data.homeLogo ?? "",
                                         height: 30,
                                         fit: BoxFit.cover,
                                       ),
@@ -170,7 +164,7 @@ class _LiveMatchState extends State<LiveMatch> {
                                     SizedBox(
                                       width: 70.w,
                                       child: Text(
-                                        data.teams!.home['name'],
+                                        data.homeTeam ?? "",
                                         maxLines: 1,
                                         textAlign: TextAlign.start,
                                         style: const TextStyle(

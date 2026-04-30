@@ -29,7 +29,12 @@ class MatchProvider extends ChangeNotifier {
   List<Leaguematch> livematch = [];
 
   Future getlivematch() async {
-    livematch = (await HttpLivematch().getlivematch())!;
+    try {
+      final result = await HttpLivematch().getlivematch();
+      livematch = result ?? [];
+    } catch (e) {
+      debugPrint("Provider getlivematch Error: $e");
+    }
     notifyListeners();
   }
 
@@ -39,7 +44,12 @@ class MatchProvider extends ChangeNotifier {
 
   Future gettodayfixturematch({String? date}) async {
     fixtureloading = true;
-    todayfixture = (await HttpFixturmatch().getFutureMatch(date: date));
+    try {
+      todayfixture = await HttpFixturmatch().getFutureMatch(date: date);
+    } catch (e) {
+      debugPrint("Provider gettodayfixturematch Error: $e");
+      todayfixture = [];
+    }
     fixtureloading = false;
     notifyListeners();
   }
@@ -50,7 +60,12 @@ class MatchProvider extends ChangeNotifier {
 
   Future getfixturematch({String? date}) async {
     allfixturematchloading = true;
-    allfixturematch = (await HttpFixturmatch().getFutureMatch(date: date));
+    try {
+      allfixturematch = await HttpFixturmatch().getFutureMatch(date: date);
+    } catch (e) {
+      debugPrint("Provider getfixturematch Error: $e");
+      allfixturematch = [];
+    }
     allfixturematchloading = false;
     notifyListeners();
   }
@@ -58,74 +73,72 @@ class MatchProvider extends ChangeNotifier {
   List<Singlefixture> singlematch = [];
 
   Future getsinglematchinfo(int fixtureid) async {
-    singlematch = (await HttpSinglefixture().getsinglefixture(fixtureid))!;
+    try {
+      final result = await HttpSinglefixture().getsinglefixture(fixtureid);
+      singlematch = result ?? [];
+    } catch (e) {
+      debugPrint("Provider getsinglematchinfo Error: $e");
+    }
     notifyListeners();
   }
 
   List<HeadtoHead> h2h = [];
 
   Future geth2h({int? teamid1, int? teamid2}) async {
-    h2h = (await Httph2h().getheadtohead(teamid1: teamid1, teamid2: teamid2))!;
+    try {
+      final result = await Httph2h().getheadtohead(teamid1: teamid1, teamid2: teamid2);
+      h2h = result ?? [];
+    } catch (e) {
+      debugPrint("Provider geth2h Error: $e");
+    }
     notifyListeners();
   }
-
-  // List<Lineup> lineup = [];
-
-  // Future getslineup(int fixtureid) async {
-  //   lineup = (await Httplineup().getlineup(fixtureid))!;
-  //   notifyListeners();
-  // }
-
-  // List<Matchstatistics> statistic = [];
-
-  // Future getstatis(int fixutreid) async {
-  //   statistic = (await HttpStatistic().getmatchstatistics(fixutreid))!;
-  //   notifyListeners();
-  // }
-
-  // List<Playerstatistics> playerstatics = [];
-
-  // Future getplayerstatics(int fixutreid) async {
-  //   playerstatics =
-  //       (await HttpPlayerstatistic().getplayerstatistics(fixutreid))!;
-  //   notifyListeners();
-  // }
-
-  // List<Matchevent> matchevent = [];
-
-  // Future getmatchevent(int fixtureid) async {
-  //   matchevent = (await Httpmatchevent().getmatchevent(fixtureid))!;
-  //   notifyListeners();
-  // }
 
   List<Allleague> allleague = [];
 
   Future getallleague() async {
-    allleague = (await HttpLeague().getallleague())!;
+    try {
+      final result = await HttpLeague().getallleague();
+      allleague = result ?? [];
+    } catch (e) {
+      debugPrint("Provider getallleague Error: $e");
+    }
     notifyListeners();
   }
 
   List<Leaguefixture> leaguefixture = [];
 
   Future getleaguefixture({int? leagueid, int? season}) async {
-    leaguefixture = (await HttpLeague()
-        .getleaguefixture(leagueid: leagueid, season: season))!;
+    try {
+      final result = await HttpLeague().getleaguefixture(leagueid: leagueid, season: season);
+      leaguefixture = result ?? [];
+    } catch (e) {
+      debugPrint("Provider getleaguefixture Error: $e");
+    }
     notifyListeners();
   }
 
   List<Standings> standing = [];
 
   Future getstanding({int? leagueid, int? season}) async {
-    standing =
-        (await Httpstanding().getstanding(leagueid: leagueid, season: season))!;
+    try {
+      final result = await Httpstanding().getstanding(leagueid: leagueid, season: season);
+      standing = result ?? [];
+    } catch (e) {
+      debugPrint("Provider getstanding Error: $e");
+    }
     notifyListeners();
   }
 
   List<TopScore>? topscore = [];
 
   Future gettopscore({int? leagueid, int? season}) async {
-    topscore =
-        (await Httptopscore().gettopscore(leagueid: leagueid, season: season));
+    try {
+      topscore = await Httptopscore().gettopscore(leagueid: leagueid, season: season) ?? [];
+    } catch (e) {
+      debugPrint("Provider gettopscore Error: $e");
+      topscore = [];
+    }
     notifyListeners();
   }
 
@@ -133,42 +146,24 @@ class MatchProvider extends ChangeNotifier {
   List<Allleague> customleague = [];
   List<Matchlist>? alllivematch = [];
   Future getcustomlivematch() async {
-    custommatch = (await HttpLivematch().getlivematch())!;
-    alllivematch = await HttpLivematch().getalllivematch();
-
-    // var match = await HttpFixturmatch().getFutureMatch(date: date);
-
-    // if (status == "live") {
-    //   for (var i = 0; i < leagueid!.live!.length; i++) {
-    //     customleague.addAll(allleague!
-    //         .where(
-    //             (element) => element.league!.id == leagueid.live![i].leagueid)
-    //         .toList());
-    //     custommatch.addAll(match!
-    //         .where(
-    //             (element) => element.league!.id == leagueid.live![i].leagueid)
-    //         .toList());
-    //   }
-    // } else {
-    //   for (var i = 0; i < leagueid!.fixture!.length; i++) {
-    //     customleague.addAll(allleague!
-    //         .where((element) =>
-    //             element.league!.id == leagueid.fixture![i].leagueid)
-    //         .toList());
-    //     custommatch.addAll(match!
-    //         .where((element) =>
-    //             element.league!.id == leagueid.fixture![i].leagueid)
-    //         .toList());
-    //   }
-    // }
+    try {
+      custommatch = await HttpLivematch().getlivematch() ?? [];
+      alllivematch = await HttpLivematch().getalllivematch() ?? [];
+    } catch (e) {
+      debugPrint("Provider getcustomlivematch Error: $e");
+    }
     notifyListeners();
   }
 
   List<LiveStream2>? liveStream2;
   bool steamload = false;
   Future getlivestream() async {
-    liveStream2 = (await HttpM3u8().getlivestream2())!;
-
+    try {
+      liveStream2 = await HttpM3u8().getlivestream2() ?? [];
+    } catch (e) {
+      debugPrint("Provider getlivestream Error: $e");
+      liveStream2 = [];
+    }
     notifyListeners();
   }
 }

@@ -20,9 +20,11 @@ class Allleague {
     List<Season>? seasons;
 
     factory Allleague.fromJson(Map<String, dynamic> json) => Allleague(
-        league: League.fromJson(json["league"]),
-        country: Country.fromJson(json["country"]),
-        seasons: List<Season>.from(json["seasons"].map((x) => Season.fromJson(x))),
+        league: json["league"] != null ? League.fromJson(json["league"]) : null,
+        country: json["country"] != null ? Country.fromJson(json["country"]) : null,
+        seasons: json["seasons"] != null 
+            ? List<Season>.from(json["seasons"].map((x) => Season.fromJson(x)))
+            : [],
     );
 
     Map<String, dynamic> toJson() => {

@@ -41,9 +41,10 @@ class _FixtureMatchState extends State<FixtureMatch> {
                     context,
                     MaterialPageRoute(
                       builder: ((context) => LeaguedetailsPage(
-                            leagueid: data1.allmatch!.first.league!.id!,
-                            season: data1.allmatch!.first.league!.season!,
-                            leaguename: data1.allmatch!.first.league!.name!,
+                            // Model အသစ်တွင် leagueId, leagueName ကို တိုက်ရိုက်သုံးသည်
+                            leagueid: data1.allmatch!.first.leagueId ?? 0,
+                            season: AppConfig.defaultSeason,
+                            leaguename: data1.allmatch!.first.leagueName ?? "",
                           )),
                     ),
                   );
@@ -55,7 +56,7 @@ class _FixtureMatchState extends State<FixtureMatch> {
                     color: AppConfig.glassEffectColor,
                   ),
                   child: Text(
-                    "${data1.allmatch!.first.league!.name!} - ${data1.allmatch!.first.league!.country}",
+                    "${data1.allmatch!.first.leagueName ?? ""} - ${data1.allmatch!.first.country ?? ""}",
                     style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 17,
@@ -85,9 +86,10 @@ class _FixtureMatchState extends State<FixtureMatch> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => DetailsPage(
-                              fictureid: data.fixture!.id!,
-                              team1: data.teams!.away['id'],
-                              team2: data.teams!.home['id']),
+                              // matchId ကိုသုံးသည်၊ team id များ model တွင် မပါသဖြင့် 0 ထားသည်
+                              fictureid: data.matchId ?? 0,
+                              team1: 0,
+                              team2: 0),
                         ),
                       );
                     },
@@ -107,7 +109,7 @@ class _FixtureMatchState extends State<FixtureMatch> {
                                       SizedBox(
                                         width: 70.w,
                                         child: Text(
-                                          data.teams!.home['name'],
+                                          data.homeTeam ?? "",
                                           maxLines: 1,
                                           textAlign: TextAlign.start,
                                           style: const TextStyle(
@@ -119,7 +121,7 @@ class _FixtureMatchState extends State<FixtureMatch> {
                                         width: 25.w,
                                         height: 25.h,
                                         child: Image.network(
-                                          data.teams!.home['logo'],
+                                          data.homeLogo ?? "",
                                           height: 30,
                                           fit: BoxFit.cover,
                                         ),
@@ -133,20 +135,18 @@ class _FixtureMatchState extends State<FixtureMatch> {
                                         MainAxisAlignment.spaceEvenly,
                                     children: [
                                       Text(
-                                        DateFormat('hh:mm a').format(
-                                            DateTime.fromMicrosecondsSinceEpoch(
-                                                data.fixture!.timestamp! *
-                                                    1000000)),
+                                        data.matchTime != null 
+                                            ? DateFormat('hh:mm a').format(data.matchTime!) 
+                                            : "--:--",
                                         style: TextStyle(
                                             fontSize: 18.sp,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white),
                                       ),
                                       Text(
-                                        DateFormat('dd MMM, yyyy').format(
-                                            DateTime.fromMicrosecondsSinceEpoch(
-                                                data.fixture!.timestamp! *
-                                                    1000000)),
+                                        data.matchTime != null 
+                                            ? DateFormat('dd MMM, yyyy').format(data.matchTime!) 
+                                            : "",
                                         style: TextStyle(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.bold,
@@ -163,7 +163,7 @@ class _FixtureMatchState extends State<FixtureMatch> {
                                       width: 25.w,
                                       height: 25.h,
                                       child: Image.network(
-                                        data.teams!.away['logo'],
+                                        data.awayLogo ?? "",
                                         height: 30,
                                         fit: BoxFit.cover,
                                       ),
@@ -172,7 +172,7 @@ class _FixtureMatchState extends State<FixtureMatch> {
                                     SizedBox(
                                       width: 70.w,
                                       child: Text(
-                                        data.teams!.away['name'],
+                                        data.awayTeam ?? "",
                                         maxLines: 1,
                                         textAlign: TextAlign.right,
                                         style: const TextStyle(
