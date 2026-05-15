@@ -6,7 +6,8 @@ import '../model/Top_Score/top_score.dart';
 
 class Httptopscore {
   Future<List<TopScore>?> gettopscore({int? leagueid, int? season}) async {
-    var data = await ApiHelp.get(ENDPOINTURL: "${AppConfig.topScoresEndpoint}/league=$leagueid/season=$season");
-    return topScoreFromJson(data.body);
+    // var data = await ApiHelp.get(ENDPOINTURL: "${AppConfig.topScoresEndpoint}/league=$leagueid/season=$season");
+    // return topScoreFromJson(data.body);
+    return [];
   }
 }

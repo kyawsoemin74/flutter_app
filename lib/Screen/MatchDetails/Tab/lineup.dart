@@ -147,6 +147,15 @@ class _LineUpPageState extends State<LineUpPage> {
   Widget build(BuildContext context) {
     final match = Provider.of<MatchProvider>(context);
 
+    if (match.singlematch.isEmpty || match.singlematch.first.lineups == null) {
+      return Center(
+        child: Text(
+          "No data Found".tr,
+          style: TextStyle(color: Colors.white),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       child: match.singlematch.first.lineups!.isEmpty
           ? Center(

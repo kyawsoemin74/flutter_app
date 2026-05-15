@@ -38,10 +38,10 @@ class _LeaguedetailsPageState extends State<LeaguedetailsPage> {
 // ads end
 
   Future loaddata() async {
-    await Provider.of<MatchProvider>(context, listen: false)
-        .getleaguefixture(leagueid: widget.leagueid, season: widget.season);
-    await Provider.of<MatchProvider>(context, listen: false)
-        .getstanding(leagueid: widget.leagueid, season: widget.season);
+    // await Provider.of<MatchProvider>(context, listen: false)
+    //     .getleaguefixture(leagueid: widget.leagueid, season: widget.season);
+    // await Provider.of<MatchProvider>(context, listen: false)
+    //     .getstanding(leagueid: widget.leagueid, season: widget.season);
   }
 
   BannerAd? _anchoredAdaptiveAd;

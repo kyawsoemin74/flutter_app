@@ -1,27 +1,74 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
-import 'package:intl/intl.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../Provider/match.dart';
 import '../../constent.dart';
 import '../League/leaguedetails.dart';
 import '../Matchdetails/matchdetails.dart';
-import 'package:flutter/foundation.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class FixtureMatch extends StatefulWidget {
-  const FixtureMatch({Key? key}) : super(key: key);
+  const FixtureMatch({super.key});
+
   @override
   State<FixtureMatch> createState() => _FixtureMatchState();
 }
 
 class _FixtureMatchState extends State<FixtureMatch> {
+  String _todayDate() {
+    return DateTime.now().toIso8601String().split('T').first;
+  }
+
   @override
   void initState() {
-    Provider.of<MatchProvider>(context, listen: false).gettodayfixturematch(
-        date: DateFormat('yyyy-MM-dd').format(DateTime.now()));
+    Provider.of<MatchProvider>(context, listen: false)
+        .gettodayfixturematch(date: _todayDate());
     super.initState();
+  }
+
+  Widget _buildTeamLogo(String? url) {
+    if (url == null || url.isEmpty) {
+      return const Icon(Icons.sports_soccer, color: Colors.white, size: 30);
+    }
+
+    return CachedNetworkImage(
+      imageUrl: url,
+      httpHeaders: AppConfig.headers,
+      fit: BoxFit.contain,
+      width: 35.w,
+      height: 35.h,
+      placeholder: (context, url) => Container(
+        width: 35.w,
+        height: 35.h,
+        alignment: Alignment.center,
+        child: const Icon(Icons.sports_soccer, color: Colors.white30, size: 20),
+      ),
+      errorWidget: (context, url, error) => const Icon(Icons.sports_soccer, color: Colors.white, size: 30),
+    );
+  }
+
+  Widget _buildCountryFlag(String? url) {
+    if (url == null || url.isEmpty) return const SizedBox.shrink();
+    final normalized = url.toLowerCase();
+    if (normalized.endsWith('.svg')) {
+      return SvgPicture.network(
+        url,
+        width: 18.w,
+        height: 18.h,
+        placeholderBuilder: (context) => const SizedBox.shrink(),
+        fit: BoxFit.contain,
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: url,
+      httpHeaders: AppConfig.headers,
+      width: 18.w,
+      height: 18.h,
+      fit: BoxFit.contain,
+      placeholder: (context, url) => const SizedBox.shrink(),
+      errorWidget: (context, url, error) => const SizedBox.shrink(),
+    );
   }
 
   @override
@@ -55,24 +102,36 @@ class _FixtureMatchState extends State<FixtureMatch> {
                     borderRadius: BorderRadius.circular(5.r),
                     color: AppConfig.glassEffectColor,
                   ),
-                  child: Text(
-                    "${data1.allmatch!.first.leagueName ?? ""} - ${data1.allmatch!.first.country ?? ""}",
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        color: Colors.indigoAccent),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _buildCountryFlag(data1.allmatch!.first.countryFlag),
+                      if ((data1.allmatch!.first.countryFlag ?? '').isNotEmpty)
+                        const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          "${data1.allmatch!.first.country ?? ""}${data1.allmatch!.first.country != null && data1.allmatch!.first.country!.isNotEmpty && data1.allmatch!.first.leagueName != null && data1.allmatch!.first.leagueName!.isNotEmpty ? ' - ' : ''}${data1.allmatch!.first.leagueName ?? ""}",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
+                              color: Colors.indigoAccent),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
               Divider(
                 height: 0.h,
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withAlpha((0.7 * 255).toInt()),
               ),
               ListView.separated(
                 separatorBuilder: (context, index) {
                   return Divider(
                     height: 0,
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withAlpha((0.3 * 255).toInt()),
                   );
                 },
                 physics: NeverScrollableScrollPhysics(),
@@ -86,10 +145,7 @@ class _FixtureMatchState extends State<FixtureMatch> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => DetailsPage(
-                              // matchId ကိုသုံးသည်၊ team id များ model တွင် မပါသဖြင့် 0 ထားသည်
-                              fictureid: data.matchId ?? 0,
-                              team1: 0,
-                              team2: 0),
+                              matchId: data.matchId ?? 0),
                         ),
                       );
                     },
@@ -106,25 +162,20 @@ class _FixtureMatchState extends State<FixtureMatch> {
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      SizedBox(
-                                        width: 70.w,
+                                      Flexible(
                                         child: Text(
                                           data.homeTeam ?? "",
                                           maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                           textAlign: TextAlign.start,
-                                          style: const TextStyle(
-                                              color: Colors.white),
+                                          style: const TextStyle(color: Colors.white),
                                         ),
                                       ),
                                       const SizedBox(width: 5),
                                       SizedBox(
-                                        width: 25.w,
-                                        height: 25.h,
-                                        child: Image.network(
-                                          data.homeLogo ?? "",
-                                          height: 30,
-                                          fit: BoxFit.cover,
-                                        ),
+                                        width: 35.w,
+                                        height: 35.h,
+                                        child: _buildTeamLogo(data.homeLogo),
                                       ),
                                     ],
                                   )),
@@ -135,23 +186,12 @@ class _FixtureMatchState extends State<FixtureMatch> {
                                         MainAxisAlignment.spaceEvenly,
                                     children: [
                                       Text(
-                                        data.matchTime != null 
-                                            ? DateFormat('hh:mm a').format(data.matchTime!) 
-                                            : "--:--",
+                                        data.displayMatchTime,
                                         style: TextStyle(
                                             fontSize: 18.sp,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white),
                                       ),
-                                      Text(
-                                        data.matchTime != null 
-                                            ? DateFormat('dd MMM, yyyy').format(data.matchTime!) 
-                                            : "",
-                                        style: TextStyle(
-                                            fontSize: 12.sp,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white),
-                                      )
                                     ],
                                   )),
                               Expanded(
@@ -160,20 +200,16 @@ class _FixtureMatchState extends State<FixtureMatch> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
                                     SizedBox(
-                                      width: 25.w,
-                                      height: 25.h,
-                                      child: Image.network(
-                                        data.awayLogo ?? "",
-                                        height: 30,
-                                        fit: BoxFit.cover,
-                                      ),
+                                      width: 35.w,
+                                      height: 35.h,
+                                      child: _buildTeamLogo(data.awayLogo),
                                     ),
                                     const SizedBox(width: 5),
-                                    SizedBox(
-                                      width: 70.w,
+                                    Flexible(
                                       child: Text(
                                         data.awayTeam ?? "",
                                         maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                         textAlign: TextAlign.right,
                                         style: const TextStyle(
                                             color: Colors.white),

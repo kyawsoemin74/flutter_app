@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../../../Provider/Ads/ads.dart';
 import '../../../../../Provider/match.dart';
@@ -172,9 +171,7 @@ class _LiveMatchPageState extends State<LiveMatchPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => DetailsPage(
-                                  fictureid: data.fixture!.id!,
-                                  team1: data.teams!.away['id'],
-                                  team2: data.teams!.home['id']),
+                                  matchId: data.fixture!.id!),
                             ));
                       },
                       child: Container(
@@ -222,20 +219,14 @@ class _LiveMatchPageState extends State<LiveMatchPage> {
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
                                     Text(
-                                      DateFormat('HH:mm').format(
-                                          DateTime.fromMicrosecondsSinceEpoch(
-                                              data.fixture!.timestamp! *
-                                                  100000)),
+                                      data.fixture!.date?.toIso8601String() ?? '',
                                       style: TextStyle(
                                           fontSize: 18.sp,
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white),
                                     ),
                                     Text(
-                                      DateFormat('dd MMM, yyyy').format(
-                                          DateTime.fromMicrosecondsSinceEpoch(
-                                              data.fixture!.timestamp! *
-                                                  1000000)),
+                                      data.fixture!.date?.toIso8601String() ?? '',
                                       style: TextStyle(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.bold,

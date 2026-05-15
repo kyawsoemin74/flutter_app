@@ -6,26 +6,23 @@ import 'package:football_xt_latest/Screen/League/Allleague/allleague.dart';
 import 'package:football_xt_latest/constent.dart';
 
 import 'package:get/get.dart';
-import 'package:in_app_review/in_app_review.dart';
 import 'package:provider/provider.dart';
 import '../Screen/Drawer/drawer.dart';
-import '../Screen/Homepage/home.dart';
 import '../Screen/Match/matchs.dart';
+import '../Screen/News/news.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../Provider/Ads/ads.dart';
 import 'package:easy_audience_network/easy_audience_network.dart' as fb;
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class MAinScreenpage extends StatefulWidget {
-  const MAinScreenpage({Key? key}) : super(key: key);
+  const MAinScreenpage({super.key});
 
   @override
   State<MAinScreenpage> createState() => _MAinScreenpageState();
 }
 
 class _MAinScreenpageState extends State<MAinScreenpage> {
-  final PageController _pageController = PageController();
-  final InAppReview _inAppReview = InAppReview.instance;
+  int _selectedIndex = 0;
 
   final GlobalKey<ScaffoldState> _key = GlobalKey();
 
@@ -46,7 +43,7 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
             MediaQuery.of(context).size.width.truncate());
 
     if (size == null) {
-      print('Unable to get height of anchored banner.');
+      debugPrint('Unable to get height of anchored banner.');
       return;
     }
 
@@ -56,14 +53,14 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
       request: AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (Ad ad) {
-          print('$ad loaded: ${ad.responseInfo}');
+          debugPrint('$ad loaded: ${ad.responseInfo}');
           setState(() {
             _anchoredAdaptiveAd = ad as BannerAd;
             _isLoaded = true;
           });
         },
         onAdFailedToLoad: (Ad ad, LoadAdError error) {
-          print('Anchored adaptive banner failedToLoad: $error');
+          debugPrint('Anchored adaptive banner failedToLoad: $error');
           ad.dispose();
         },
       ),
@@ -78,19 +75,19 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
       bannerSize: fb.BannerSize.STANDARD,
       listener: fb.BannerAdListener(
         onClicked: () {
-          print("Banner Ad: click");
+          debugPrint("Banner Ad: click");
         },
         onError: (code, message) {
-          print("Banner Ad: $code -->  $message");
+          debugPrint("Banner Ad: $code -->  $message");
         },
         onLoaded: () {
           setState(() {
             _isLoaded = true;
           });
-          print("Banner Ad: loaded");
+          debugPrint("Banner Ad: loaded");
         },
         onLoggingImpression: () {
-          print("Banner Ad: impression");
+          debugPrint("Banner Ad: impression");
         },
       ),
     );
@@ -124,26 +121,33 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final provider = Provider.of<Adsprovider>(context, listen: false);
-    if (provider.ads!.google == 1) {
-      _loadAd();
+    if (provider.isLoaded && provider.ads != null && provider.ads!.google == 1) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _loadAd();
+      });
     }
   }
 
   @override
   void dispose() {
-    super.dispose();
     _anchoredAdaptiveAd?.dispose();
+    super.dispose();
   }
 
   @override
   void initState() {
-    loadads();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<Adsprovider>(context);
+    // Ensure ads is loaded, otherwise show loading
+    if (!provider.isLoaded) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return Scaffold(
       key: _key,
       endDrawer: const DrawerPage(),
@@ -151,108 +155,114 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            provider.ads!.fb == 1
+            provider.ads?.fb == 1
                 ? currentAd
-                : provider.ads!.google == 1
+                : provider.ads?.google == 1
                     ? _isLoaded
                         ? bannerads()
                         : SizedBox()
                     : SizedBox(),
-            Container( // Changed to use AppConfig.scaffoldBgColor
+            Container(
               color: AppConfig.scaffoldBgColor,
-              height: 50,
+              height: 60,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   InkWell(
                     onTap: () {
-                      _pageController.jumpToPage(0);
+                      setState(() {
+                        _selectedIndex = 0;
+                      });
                     },
-                    child: Container(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          const Icon(
-                            Icons.home,
-                            color: Colors.white,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Icon(
+                          Icons.sports_soccer,
+                          color: _selectedIndex == 0 ? Colors.white : Colors.white70,
+                          size: 24.sp,
+                        ),
+                        Text(
+                          "Match".tr,
+                          style: TextStyle(
+                            color: _selectedIndex == 0 ? Colors.white : Colors.white70,
+                            fontSize: 12.sp,
                           ),
-                          Text(
-                            "Home".tr,
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.sp),
-                          )
-                        ],
-                      ),
+                        )
+                      ],
                     ),
                   ),
                   InkWell(
                     onTap: () {
-                      _pageController.jumpToPage(1);
+                      setState(() {
+                        _selectedIndex = 1;
+                      });
                     },
-                    child: Container(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          SizedBox(
-                              height: 20.h,
-                              width: 20.w,
-                              child: Image.asset(
-                                "images/football1.png",
-                                color: Colors.white,
-                              )),
-                          Text(
-                            "Match".tr,
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.sp),
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      _pageController.jumpToPage(2);
-                    },
-                    child: Container(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          SizedBox(
-                            height: 20.h,
-                            width: 20.h,
-                            child: Image.asset(
-                              "images/podium.png",
-                              color: Colors.white,
-                            ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Icon(
+                          Icons.article,
+                          color: _selectedIndex == 1 ? Colors.white : Colors.white70,
+                          size: 24.sp,
+                        ),
+                        Text(
+                          "News".tr,
+                          style: TextStyle(
+                            color: _selectedIndex == 1 ? Colors.white : Colors.white70,
+                            fontSize: 12.sp,
                           ),
-                          Text(
-                            "League".tr,
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.sp),
-                          )
-                        ],
-                      ),
+                        )
+                      ],
                     ),
                   ),
                   InkWell(
                     onTap: () {
+                      setState(() {
+                        _selectedIndex = 2;
+                      });
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Icon(
+                          Icons.leaderboard,
+                          color: _selectedIndex == 2 ? Colors.white : Colors.white70,
+                          size: 24.sp,
+                        ),
+                        Text(
+                          "League".tr,
+                          style: TextStyle(
+                            color: _selectedIndex == 2 ? Colors.white : Colors.white70,
+                            fontSize: 12.sp,
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = 3;
+                      });
                       _key.currentState!.openEndDrawer();
                     },
-                    child: Container(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          const Icon(
-                            Icons.menu,
-                            color: Colors.white,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Icon(
+                          Icons.menu,
+                          color: _selectedIndex == 3 ? Colors.white : Colors.white70,
+                          size: 24.sp,
+                        ),
+                        Text(
+                          "Menu".tr,
+                          style: TextStyle(
+                            color: _selectedIndex == 3 ? Colors.white : Colors.white70,
+                            fontSize: 12.sp,
                           ),
-                          Text(
-                            "Menu".tr,
-                            style:
-                                TextStyle(color: Colors.white, fontSize: 12.sp),
-                          )
-                        ],
-                      ),
+                        )
+                      ],
                     ),
                   ),
                 ],
@@ -261,13 +271,21 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
           ],
         ),
       ),
-      body: PageView(
-        physics: const NeverScrollableScrollPhysics(),
-        controller: _pageController,
+      body: IndexedStack(
+        index: _selectedIndex,
         children: [
-          const HomePage(),
           const Matchspage(),
+          const NewsPage(),
           const AllleaguePage(),
+          Container(
+            color: AppConfig.scaffoldBgColor,
+            child: Center(
+              child: Text(
+                'Menu'.tr,
+                style: TextStyle(color: Colors.white, fontSize: 18.sp),
+              ),
+            ),
+          ),
         ],
       ),
     );

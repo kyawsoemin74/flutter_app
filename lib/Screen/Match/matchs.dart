@@ -5,16 +5,26 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:easy_audience_network/easy_audience_network.dart' as fb;
+
 import '../../Provider/Ads/ads.dart';
 import '../../Provider/filterdate.dart';
 import '../../Provider/match.dart';
 import '../LiveMatch/livematch2.dart';
 import 'Fixture/todaymatch.dart';
-import 'package:easy_audience_network/easy_audience_network.dart' as fb;
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+const List<String> _monthAbbreviations = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+];
+
+String _formatShortDate(DateTime date) {
+  return '${date.day.toString().padLeft(2, '0')} ${_monthAbbreviations[date.month - 1]}';
+}
+
+String _formatIsoDate(DateTime date) {
+  return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+}
 
 class Matchspage extends StatefulWidget {
   const Matchspage({Key? key}) : super(key: key);
@@ -36,12 +46,9 @@ class _MatchspageState extends State<Matchspage>
   }
 
   Future loadmatchdata(DateTime dateTime) async {
-    Provider.of<MatchProvider>(context, listen: false).gettodayfixturematch(
-        date: DateFormat("yyyy-MM-dd")
-            .format(DateTime(dateTime.year, dateTime.month, dateTime.day)));
-    Provider.of<MatchProvider>(context, listen: false).getfixturematch(
-        date: DateFormat("yyyy-MM-dd")
-            .format(DateTime(dateTime.year, dateTime.month, dateTime.day)));
+    final requestDate = _formatIsoDate(DateTime(dateTime.year, dateTime.month, dateTime.day));
+    Provider.of<MatchProvider>(context, listen: false).gettodayfixturematch(date: requestDate);
+    Provider.of<MatchProvider>(context, listen: false).getfixturematch(date: requestDate);
   }
 
   bool live = false;
@@ -244,8 +251,7 @@ loadinterstitialads();
           tabs: List.generate(
               filterdate.datetime.length,
               (index) => Tab(
-                    child: Text(DateFormat("dd MMM")
-                        .format(filterdate.datetime[index])),
+                    child: Text(_formatShortDate(filterdate.datetime[index])),
                   )),
           controller: tabController,
           isScrollable: true,

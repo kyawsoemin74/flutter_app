@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:football_xt_latest/Screen/Matchdetails/matchdetails.dart';
 
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../Provider/match.dart';
 import '../../constent.dart';
+import '../../Custom_Model/leaguemathc.dart';
 import '../League/leaguedetails.dart';
 
 class LiveMatch extends StatefulWidget {
@@ -18,84 +19,85 @@ class LiveMatch extends StatefulWidget {
 class _LiveMatchState extends State<LiveMatch> {
   @override
   void initState() {
-    Provider.of<MatchProvider>(context, listen: false).getlivematch();
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MatchProvider>(context, listen: false).getlivematch();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final livematch = Provider.of<MatchProvider>(context);
-    return SliverList(
-      delegate: SliverChildBuilderDelegate((context, index) {
-        var data1 = livematch.livematch[index];
-        return Container(
-          margin: const EdgeInsets.only(left: 5, right: 5, bottom: 10),
-          width: double.infinity,
-          child: Column(
-            children: [
-              InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: ((context) => LeaguedetailsPage(
-                            leagueid: data1.allmatch!.first.leagueId ?? 0,
-                            season: AppConfig.defaultSeason,
-                            leaguename: data1.allmatch!.first.leagueName ?? "",
-                          )),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(8.0),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(5.r),
-                    color: AppConfig.glassEffectColor,
-                  ),
-                  child: Text(
-                    "${data1.allmatch!.first.leagueName ?? ""} - ${data1.allmatch!.first.country ?? ""}",
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17,
-                        color: Colors.indigoAccent),
-                  ),
-                ),
-              ),
-              Divider(
-                height: 0.h,
-                color: Colors.white.withOpacity(0.7),
-              ),
-              ListView.separated(
-                separatorBuilder: (context, index) {
-                  return Divider(
-                    height: 0,
-                    color: Colors.white.withOpacity(0.3),
-                  );
-                },
-                physics: NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: data1.allmatch!.length,
-                itemBuilder: (context, index) {
-                  var data = data1.allmatch![index];
-                  return InkWell(
+    return Selector<MatchProvider, List<Leaguematch>>(
+      selector: (context, provider) => provider.livematch,
+      builder: (context, livematch, child) {
+        return SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            var data1 = livematch[index];
+            return Container(
+              margin: const EdgeInsets.only(left: 5, right: 5, bottom: 10),
+              width: double.infinity,
+              child: Column(
+                children: [
+                  InkWell(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DetailsPage(
-                              fictureid: data.matchId ?? 0,
-                              team1: 0,
-                              team2: 0),
+                          builder: ((context) => LeaguedetailsPage(
+                                leagueid: data1.allmatch!.first.leagueId ?? 0,
+                                season: AppConfig.defaultSeason,
+                                leaguename: data1.allmatch!.first.leagueName ?? "",
+                              )),
                         ),
                       );
                     },
                     child: Container(
-                      padding: EdgeInsets.all(10.r),
-                      color: AppConfig.glassEffectColor,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Row(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(5.r),
+                        color: AppConfig.glassEffectColor,
+                      ),
+                      child: Text(
+                        "${data1.allmatch!.first.leagueName ?? ""} - ${data1.allmatch!.first.country ?? ""}",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                            color: Colors.indigoAccent),
+                      ),
+                    ),
+                  ),
+                  const Divider(
+                    height: 0,
+                    color: Color.fromRGBO(255, 255, 255, 0.7),
+                  ),
+                  ListView.separated(
+                    separatorBuilder: (context, index) => const Divider(
+                      height: 0,
+                      color: Color.fromRGBO(255, 255, 255, 0.3),
+                    ),
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: data1.allmatch!.length,
+                    itemBuilder: (context, index) {
+                      var data = data1.allmatch![index];
+                      return InkWell(
+                        onTap: () async {
+                          final matchId = data.matchId;
+                          if (matchId == null) return;
+                          await Provider.of<MatchProvider>(context, listen: false).fetchMatchDetails(matchId);
+                          if (context.mounted) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DetailsPage(matchId: matchId),
+                              ),
+                            );
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.all(10.r),
+                          color: AppConfig.glassEffectColor,
+                          child: Row(
                             children: [
                               Expanded(
                                   flex: 1,
@@ -116,10 +118,13 @@ class _LiveMatchState extends State<LiveMatch> {
                                       SizedBox(
                                         width: 25.w,
                                         height: 25.h,
-                                        child: Image.network(
-                                          data.awayLogo ?? "",
-                                          height: 30,
+                                        child: CachedNetworkImage(
+                                          imageUrl: data.awayLogo ?? "",
+                                          memCacheWidth: 50,
+                                          memCacheHeight: 50,
                                           fit: BoxFit.cover,
+                                          placeholder: (context, url) => const SizedBox.shrink(),
+                                          errorWidget: (context, url, error) => const Icon(Icons.error, size: 20),
                                         ),
                                       )
                                     ],
@@ -154,10 +159,13 @@ class _LiveMatchState extends State<LiveMatch> {
                                     SizedBox(
                                       width: 25.w,
                                       height: 25.h,
-                                      child: Image.network(
-                                        data.homeLogo ?? "",
-                                        height: 30,
+                                      child: CachedNetworkImage(
+                                        imageUrl: data.homeLogo ?? "",
+                                        memCacheWidth: 50,
+                                        memCacheHeight: 50,
                                         fit: BoxFit.cover,
+                                        placeholder: (context, url) => const SizedBox.shrink(),
+                                        errorWidget: (context, url, error) => const Icon(Icons.error, size: 20),
                                       ),
                                     ),
                                     const SizedBox(width: 5),
@@ -176,17 +184,18 @@ class _LiveMatchState extends State<LiveMatch> {
                               )
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          }, childCount: livematch.length),
         );
-      }, childCount: livematch.livematch.length),
+      },
     );
+  }
     // return SliverToBoxAdapter(
     //   child: livematch.livematch.isEmpty
     //       ? Container()
@@ -316,4 +325,4 @@ class _LiveMatchState extends State<LiveMatch> {
     //         ),
     // );
   }
-}
+

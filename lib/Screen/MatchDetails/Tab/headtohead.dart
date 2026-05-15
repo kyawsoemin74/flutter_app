@@ -28,9 +28,10 @@ class _HeadToHeadPageState extends State<HeadToHeadPage> {
       loading = true;
     });
     final match = Provider.of<MatchProvider>(context, listen: false);
-    await match.geth2h(
-        teamid1: match.singlematch.first.teams!.home['id'],
-        teamid2: match.singlematch.first.teams!.away['id']);
+    final matchId = match.singleMatchData?.matchId;
+    if (matchId != null) {
+      await match.geth2h(matchid: matchId);
+    }
     setState(() {
       loading = false;
     });
@@ -154,14 +155,25 @@ class _HeadToHeadPageState extends State<HeadToHeadPage> {
     }
   }
   @override
-  void initState() {loadinterstitialads();
-    loaddata();
+  void initState() {
     super.initState();
+    loadinterstitialads();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loaddata();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final match = Provider.of<MatchProvider>(context);
+    if (loading) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: Colors.white,
+        ),
+      );
+    }
+
     if (match.h2h.isEmpty) {
       return Center(
         child: Text(
@@ -170,7 +182,7 @@ class _HeadToHeadPageState extends State<HeadToHeadPage> {
         ),
       );
     } else {
-      return loading ? Center(child: CircularProgressIndicator(),) : SingleChildScrollView(
+      return SingleChildScrollView(
         child: Column(
           children: [
             // Container(

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class TranslatePage extends StatelessWidget {
-  TranslatePage({super.key});
+  const TranslatePage({super.key});
 
-  List local = [
+  static const List local = [
     {"name": "English", "locale": Locale("en", "Us")},
     {"name": "Brazil", "locale": Locale("br", "BR")},
     {"name": "Khmer", "locale": Locale("km", "KH")},

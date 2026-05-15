@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hive_flutter/adapters.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../../../Ads_Code/ads_code.dart';
 import '../../../../../Provider/Ads/ads.dart';
@@ -183,9 +182,7 @@ loadinterstitialads();
                             context,
                             MaterialPageRoute(
                               builder: (context) => DetailsPage(
-                                  fictureid: data.fixture!.id!,
-                                  team1: data.teams!.home['id'],
-                                  team2: data.teams!.away['id']),
+                                  matchId: data.fixture!.id!),
                             ));
                       },
                       child: Container(
@@ -235,22 +232,14 @@ loadinterstitialads();
                                     data.fixture!.status!.short == "TBD"
                                         ? Text(data.fixture!.status!.short!)
                                         : Text(
-                                            DateFormat('hh:mm a').format(
-                                                DateTime
-                                                    .fromMicrosecondsSinceEpoch(
-                                                        data.fixture!
-                                                                .timestamp! *
-                                                            1000000)),
+                                            data.fixture!.date?.toIso8601String() ?? '',
                                             style: TextStyle(
                                                 fontSize: 18.sp,
                                                 fontWeight: FontWeight.bold,
                                                 color: Colors.white),
                                           ),
                                     Text(
-                                      DateFormat('dd MMM, yyyy').format(
-                                          DateTime.fromMicrosecondsSinceEpoch(
-                                              data.fixture!.timestamp! *
-                                                  1000000)),
+                                      data.fixture!.date?.toIso8601String() ?? '',
                                       style: TextStyle(
                                           fontSize: 12.sp,
                                           fontWeight: FontWeight.bold,

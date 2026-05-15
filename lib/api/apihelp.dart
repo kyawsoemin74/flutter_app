@@ -7,18 +7,14 @@ class ApiHelp {
 
   static Future<http.Response> get({required String ENDPOINTURL}) async {
     try {
-      var request = http.Request('GET', Uri.parse('$BASEURL$ENDPOINTURL'))
-        ..headers.addAll({'Content-Type': 'application/json'});
+      final url = Uri.parse('$BASEURL$ENDPOINTURL');
+      final response = await http.get(url, headers: AppConfig.headers);
       
-      debugPrint('Requesting: $BASEURL$ENDPOINTURL');
-
-      http.StreamedResponse response = await request.send().timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        return http.Response.fromStream(response);
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return response;
       } else {
-        debugPrint('Server Error (${response.statusCode}): ${response.reasonPhrase} at $ENDPOINTURL');
-        return http.Response('{"error": "Server Error", "status": ${response.statusCode}}', response.statusCode);
+        debugPrint('Server Error (${response.statusCode}): ${response.body} at $ENDPOINTURL');
+        return response;
       }
     } catch (e) {
       debugPrint('Network Error: $e');

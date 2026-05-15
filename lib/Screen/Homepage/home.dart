@@ -1,11 +1,8 @@
 // ignore_for_file: avoid_print
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../Provider/match.dart';
 import '../../constent.dart';
@@ -13,26 +10,28 @@ import '../FixtureMatch/fixturematch.dart';
 import '../leagueCustomMatch/leaguecustommathc.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> {
   String? imageurl;
   bool loading = false;
   bool isExpanded = false;
 
-  TabController? _tabController;
+  String _todayDate() {
+    return DateTime.now().toIso8601String().split('T').first;
+  }
 
   @override
   void initState() {
-    _tabController = TabController(length: 3, vsync: this);
-    Provider.of<MatchProvider>(context, listen: false).gettodayfixturematch(
-        date: DateFormat('yyyy-MM-dd').format(DateTime.now()));
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<MatchProvider>(context, listen: false)
+          .gettodayfixturematch(date: _todayDate());
+    });
   }
 
   @override
@@ -53,8 +52,7 @@ class _HomePageState extends State<HomePage>
             slivers: [
               SliverToBoxAdapter(
                 child: LeagueCustomMatch(
-                    status: 'live',
-                    data: DateFormat("yyyy-MM-dd").format(DateTime.now())),
+                    status: 'live', data: _todayDate()),
               ),
               // LiveMatch(),
               SliverToBoxAdapter(

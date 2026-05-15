@@ -3,39 +3,44 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:football_xt_latest/constent.dart';
 import 'package:football_xt_latest/splash.dart';
 
-import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:path_provider/path_provider.dart';
-
-import 'package:firebase_core/firebase_core.dart';//အသစ်ထည့်လိုက်တဲ့ import
-import 'firebase_options.dart';  //အသစ်ထည့်လိုက်တဲ့ import
 
 import 'package:provider/provider.dart';
 import 'Provider/Ads/ads.dart';
 import 'Provider/filterdate.dart';
 import 'Provider/match.dart';
-import 'Translate/translate.dart';
+import 'Provider/news.dart';
 
 void main() async {
+  // 1. Flutter engine ကို အရင်နှိုးမယ်
   WidgetsFlutterBinding.ensureInitialized();
-  
-  await Future.wait([
-    Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform),
-    Hive.initFlutter(),
-    MobileAds.instance.initialize(),
-  ]);
 
-  await Hive.openBox("ads");
-  runApp(MultiProvider(providers: [
-    ChangeNotifierProvider(create: ((context) => MatchProvider())),
-    ChangeNotifierProvider(create: ((context) => Adsprovider())),
-    ChangeNotifierProvider(create: ((context) => FilterDateProvider())),
-  ], child: const MyApp()));
+  try {
+    // 2. Data သိမ်းမယ့် Hive ကို စိတ်ချရအောင် await လုပ်မယ်
+    await Hive.initFlutter();
+    await Hive.openBox('ads');
+  } catch (e) {
+    debugPrint("Hive Error: $e"); // Error တက်ရင်လည်း App ဆက်ပွင့်အောင် လုပ်ထားတာပါ
+  }
+
+  // 3. MobileAds ကို background မှာပဲ ပစ်ထားမယ် (Hanging မဖြစ်အောင်)
+  MobileAds.instance.initialize();
+
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => MatchProvider()),
+      ChangeNotifierProvider(create: (_) => Adsprovider()),
+      ChangeNotifierProvider(create: (_) => FilterDateProvider()),
+      ChangeNotifierProvider(create: (_) => NewsProvider()),
+    ],
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
@@ -48,26 +53,28 @@ class MyApp extends StatelessWidget {
           title: AppConfig.appName,
           theme: ThemeData(
             useMaterial3: false,
-            scaffoldBackgroundColor: const Color(0xFF102a4a),
-            primarySwatch: const MaterialColor(0xFF102a4a, {
-              50: Color(0xFFE2E5E9),
-              100: Color(0xFFB8C0C9),
-              200: Color(0xFF8996A5),
-              300: Color(0xFF5A6C81),
-              400: Color(0xFF374D66),
-              500: Color(0xFF102a4a),
-              600: Color(0xFF0E2543),
-              700: Color(0xFF0C1F3A),
-              800: Color(0xFF0A1932),
-              900: Color(0xFF060F22),
+            // --- ပြင်ဆင်လိုက်သော အနက်ရောင် Logic ---
+            scaffoldBackgroundColor: const Color(0xFF000000), 
+            primarySwatch: const MaterialColor(0xFF000000, {
+              50: Color(0xFFE0E0E0),
+              100: Color(0xFFBDBDBD),
+              200: Color(0xFF9E9E9E),
+              300: Color(0xFF757575),
+              400: Color(0xFF616161),
+              500: Color(0xFF000000), 
+              600: Color(0xFF000000),
+              700: Color(0xFF000000),
+              800: Color(0xFF000000),
+              900: Color(0xFF000000),
             }),
+            // ------------------------------------
             textTheme: Typography.englishLike2018
                 .apply(fontSizeFactor: 1.sp, bodyColor: Colors.white),
           ),
           home: child,
         );
       },
-      child: const SplashScreenPage(),
+      child: const SplashScreenPage(), // splash ထဲက navigation logic ကိုလည်း ပြန်စစ်ပေးပါ
     );
   }
 }

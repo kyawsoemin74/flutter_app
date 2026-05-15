@@ -1,38 +1,24 @@
-// ignore_for_file: avoid_print
-
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:football_xt_latest/constent.dart';
 
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
-import 'package:percent_indicator/circular_percent_indicator.dart';
 import 'package:provider/provider.dart';
 import 'package:slide_countdown/slide_countdown.dart';
-import '../../Ads_Code/ads_code.dart';
 import '../../Provider/Ads/ads.dart';
 import '../../Provider/match.dart';
 import 'Tab/headtohead.dart';
 import 'Tab/lineup.dart';
-import 'Tab/matchpreview.dart';
-import 'Tab/matchsummary.dart';
+import 'Tab/odds.dart';
+import 'Tab/statis.dart';
+import 'Tab/table.dart';
 import 'Tab/timeline.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:easy_audience_network/easy_audience_network.dart' as fb;
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class DetailsPage extends StatefulWidget {
-  final int fictureid;
-  final int team1;
-  final int team2;
-  const DetailsPage(
-      {Key? key,
-      required this.fictureid,
-      required this.team1,
-      required this.team2})
-      : super(key: key);
+  final int matchId;
+  const DetailsPage({Key? key, required this.matchId}) : super(key: key);
 
   @override
   State<DetailsPage> createState() => _DetailsPageState();
@@ -42,30 +28,53 @@ class _DetailsPageState extends State<DetailsPage>
     with SingleTickerProviderStateMixin {
   TabController? tabController;
   List<Tab> tablist = [
-    Tab(child: Text("Timeline".tr)),
-    Tab(child: Text("Statistics".tr)),
-    Tab(child: Text("Line Up".tr)),
-    Tab(child: Text("Head to Head".tr)),
+    Tab(child: Text("Odds".tr)),
+    Tab(child: Text("Facts".tr)),
+    Tab(child: Text("Statis".tr)),
+    Tab(child: Text("Lineup".tr)),
+    Tab(child: Text("H2H".tr)),
+    Tab(child: Text("Table".tr)),
   ];
 
   bool loading = true;
 
   Future loaddata() async {
-    final match = Provider.of<MatchProvider>(context, listen: false);
-    try {
-      await match.getsinglematchinfo(widget.fictureid);
-      // await match.geth2h(teamid1: widget.team1, teamid2: widget.team2);
-      // match.getslineup(widget.fictureid);
-      // match.getstatis(widget.fictureid);
-      // match.getplayerstatics(widget.fictureid);
-      // match.getmatchevent(widget.fictureid);
-      setState(() {
-        loading = false;
-      });
-    } catch (e) {
-      setState(() {
-        loading = false;
-      });
+    final matchProvider = Provider.of<MatchProvider>(context, listen: false);
+    await Future.wait([
+      matchProvider.fetchMatchDetails(widget.matchId),
+      matchProvider.getsinglematchinfo(widget.matchId),
+    ]);
+    setState(() {
+      loading = false;
+    });
+  }
+
+  void _handleTabChange() {
+    if (tabController?.indexIsChanging == true) return;
+    final matchProvider = Provider.of<MatchProvider>(context, listen: false);
+    final currentIndex = tabController?.index ?? 0;
+
+    switch (currentIndex) {
+      case 0:
+        if (matchProvider.odds.isEmpty) {
+          matchProvider.getOdds(matchid: widget.matchId);
+        }
+        break;
+      case 1:
+      case 3:
+        if (matchProvider.singlematch.isEmpty) {
+          matchProvider.getsinglematchinfo(widget.matchId);
+        }
+        break;
+      case 4:
+        if (matchProvider.h2h.isEmpty) {
+          matchProvider.geth2h(matchid: widget.matchId);
+        }
+        break;
+      case 2:
+      case 5:
+      default:
+        break;
     }
   }
 
@@ -173,10 +182,13 @@ class _DetailsPageState extends State<DetailsPage>
 
   @override
   void initState() {
-    loadads();
-    loaddata();
-    tabController = TabController(length: tablist.length, vsync: this);
     super.initState();
+    loadads();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loaddata();
+    });
+    tabController = TabController(length: tablist.length, vsync: this)
+      ..addListener(_handleTabChange);
   }
 
   @override
@@ -195,7 +207,7 @@ class _DetailsPageState extends State<DetailsPage>
         title: Text("Match Details".tr),
       ),
 
-      body: loading || match.singlematch.isEmpty
+      body: loading || match.isLoadingMatchDetails || match.singleMatchData == null
           ? Center(
               child: CircularProgressIndicator(
               color: Colors.white,
@@ -220,8 +232,8 @@ class _DetailsPageState extends State<DetailsPage>
                                     width: 110.w,
                                     padding: EdgeInsets.all(15.r),
                                     decoration: const BoxDecoration(),
-                                    child: match.singlematch.first.teams?.home['logo'] != null 
-                                        ? Image.network(match.singlematch.first.teams!.home['logo'])
+                                    child: match.singleMatchData!.homeLogo != null 
+                                        ? Image.network(match.singleMatchData!.homeLogo!)
                                         : const Icon(Icons.sports_soccer, color: Colors.white),
                                   ),
                                   Container(
@@ -230,8 +242,7 @@ class _DetailsPageState extends State<DetailsPage>
                                     alignment: Alignment.topCenter,
                                     decoration: const BoxDecoration(),
                                     child: Text(
-                                      match.singlematch.first.teams!
-                                          .home['name'],
+                                      match.singleMatchData!.homeTeam ?? '',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                           color: Colors.white, fontSize: 12.sp),
@@ -243,8 +254,7 @@ class _DetailsPageState extends State<DetailsPage>
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (matchstatus(
-                                          sort: match.singlematch.first.fixture!
-                                              .status!.short) !=
+                                          sort: match.singleMatchData!.status) !=
                                       "fix")
                                     Container(
                                       alignment: Alignment.center,
@@ -252,7 +262,7 @@ class _DetailsPageState extends State<DetailsPage>
                                       width: 110.w,
                                       decoration: const BoxDecoration(),
                                       child: Text(
-                                        "${match.singlematch.first.goals!.home ?? 0}-${match.singlematch.first.goals!.away ?? 0}",
+                                        match.singleMatchData!.score ?? "0 - 0",
                                         style: TextStyle(
                                             fontSize: 30.sp,
                                             fontWeight: FontWeight.w700,
@@ -260,8 +270,7 @@ class _DetailsPageState extends State<DetailsPage>
                                       ),
                                     ),
                                   if (matchstatus(
-                                          sort: match.singlematch.first.fixture!
-                                              .status!.short) ==
+                                          sort: match.singleMatchData!.status) ==
                                       "fix")
                                     Container(
                                       alignment: Alignment.center,
@@ -276,12 +285,11 @@ class _DetailsPageState extends State<DetailsPage>
                                             borderRadius:
                                                 BorderRadius.circular(20.r)),
                                         duration: ftmatchdurationdata(match
-                                            .singlematch.first.fixture!.date!),
+                                            .singleMatchData!.matchTime),
                                       ),
                                     ),
                                   if (matchstatus(
-                                          sort: match.singlematch.first.fixture!
-                                              .status!.short) ==
+                                          sort: match.singleMatchData!.status) ==
                                       "live")
                                     Container(
                                       width: 110.w,
@@ -289,7 +297,7 @@ class _DetailsPageState extends State<DetailsPage>
                                       alignment: Alignment.topCenter,
                                       decoration: const BoxDecoration(),
                                       child: Text(
-                                        "${match.singlematch.first.fixture!.status!.short!}-${match.singlematch.first.fixture!.status!.elapsed ?? 0}'",
+                                        match.singleMatchData!.status ?? "LIVE",
                                         style: TextStyle(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.w600,
@@ -297,8 +305,7 @@ class _DetailsPageState extends State<DetailsPage>
                                       ),
                                     ),
                                   if (matchstatus(
-                                          sort: match.singlematch.first.fixture!
-                                              .status!.short) ==
+                                          sort: match.singleMatchData!.status) ==
                                       "rec")
                                     Container(
                                       width: 110.w,
@@ -306,7 +313,7 @@ class _DetailsPageState extends State<DetailsPage>
                                       alignment: Alignment.topCenter,
                                       decoration: const BoxDecoration(),
                                       child: Text(
-                                        "${match.singlematch.first.fixture!.status!.short!}-${match.singlematch.first.fixture!.status!.elapsed}",
+                                        match.singleMatchData!.status ?? "FT",
                                         style: TextStyle(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.w600,
@@ -314,8 +321,7 @@ class _DetailsPageState extends State<DetailsPage>
                                       ),
                                     ),
                                   if (matchstatus(
-                                          sort: match.singlematch.first.fixture!
-                                              .status!.short) ==
+                                          sort: match.singleMatchData!.status) ==
                                       "fix")
                                     Container(
                                       width: 110.w,
@@ -323,11 +329,7 @@ class _DetailsPageState extends State<DetailsPage>
                                       alignment: Alignment.topCenter,
                                       decoration: const BoxDecoration(),
                                       child: Text(
-                                        DateFormat('dd MMM, hh:mm a').format(
-                                            DateTime.fromMicrosecondsSinceEpoch(
-                                                match.singlematch.first.fixture!
-                                                        .timestamp! *
-                                                    1000000)),
+                                        match.singleMatchData!.matchTime ?? '',
                                         style: TextStyle(
                                             fontSize: 12.sp,
                                             fontWeight: FontWeight.w600,
@@ -343,8 +345,8 @@ class _DetailsPageState extends State<DetailsPage>
                                       width: 110.w,
                                       padding: EdgeInsets.all(15.r),
                                       decoration: const BoxDecoration(),
-                                      child: match.singlematch.first.teams?.away['logo'] != null
-                                          ? Image.network(match.singlematch.first.teams!.away['logo'])
+                                      child: match.singleMatchData!.awayLogo != null
+                                          ? Image.network(match.singleMatchData!.awayLogo!)
                                           : const Icon(Icons.sports_soccer, color: Colors.white),
                                   ),
                                   Container(
@@ -353,8 +355,7 @@ class _DetailsPageState extends State<DetailsPage>
                                       alignment: Alignment.topCenter,
                                       decoration: const BoxDecoration(),
                                       child: Text(
-                                        match.singlematch.first.teams!
-                                            .away['name'],
+                                        match.singleMatchData!.awayTeam ?? '',
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                             color: Colors.white,
@@ -382,10 +383,12 @@ class _DetailsPageState extends State<DetailsPage>
               body: TabBarView(
                 controller: tabController,
                 children: [
-                  TimeLinePage(teama: widget.team1, teamb: widget.team2),
-                  const MatchSummaryPage(),
-                  LineUpPage(),
+                  OddsPage(matchId: widget.matchId),
+                  FactsPage(teama: 0, teamb: 0),
+                  const StatisPage(),
+                  const LineUpPage(),
                   const HeadToHeadPage(),
+                  const TablePage(),
                 ],
               )),
       // body: loading

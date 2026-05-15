@@ -3,7 +3,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:football_xt_latest/constent.dart';
 
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../Provider/match.dart';
 import '../League/leaguedetails.dart';
@@ -91,13 +90,13 @@ class _LiveMatch2State extends State<LiveMatch2> {
                             ),
                             Divider(
                               height: 0.h,
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withAlpha((0.7 * 255).toInt()),
                             ),
                             ListView.separated(
                               separatorBuilder: (context, index) {
                                 return Divider(
                                   height: 0,
-                                  color: Colors.white.withOpacity(0.3),
+                                  color: Colors.white.withAlpha((0.3 * 255).toInt()),
                                 );
                               },
                               physics: NeverScrollableScrollPhysics(),
@@ -121,10 +120,7 @@ class _LiveMatch2State extends State<LiveMatch2> {
                                               MaterialPageRoute(
                                                 builder: (context) =>
                                                     DetailsPage( 
-                                                        // matchId ကိုသုံးသည်၊ team id များ model တွင် မပါသဖြင့် 0 ထားသည်
-                                                        fictureid: data.matchId ?? 0,
-                                                        team1: 0,
-                                                        team2: 0,
+                                                        matchId: data.matchId ?? 0,
                                                     ),
                                               ));
                                         },

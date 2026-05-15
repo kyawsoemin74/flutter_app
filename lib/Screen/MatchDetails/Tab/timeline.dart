@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
 import '../../../Ads_Code/ads_code.dart';
@@ -13,17 +14,17 @@ import 'package:easy_audience_network/easy_audience_network.dart' as fb;
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 
-class TimeLinePage extends StatefulWidget {
+class FactsPage extends StatefulWidget {
   final int teama;
   final int teamb;
-  const TimeLinePage({Key? key, required this.teama, required this.teamb})
+  const FactsPage({Key? key, required this.teama, required this.teamb})
       : super(key: key);
 
   @override
-  State<TimeLinePage> createState() => _TimeLinePageState();
+  State<FactsPage> createState() => _FactsPageState();
 }
 
-class _TimeLinePageState extends State<TimeLinePage> {
+class _FactsPageState extends State<FactsPage> {
   List<String> imagelist = [
     "Assets/Icon/image 20.png",
     "Assets/Icon/image 20.png",
@@ -157,16 +158,35 @@ class _TimeLinePageState extends State<TimeLinePage> {
   @override
   Widget build(BuildContext context) {
     final match = Provider.of<MatchProvider>(context);
-    match.singlematch.first.events!.sort(
+
+    if (match.singlematch.isEmpty || match.singlematch.first.events == null) {
+      return Center(
+        child: Text(
+          "No data Found".tr,
+          style: TextStyle(color: Colors.white, fontSize: 16.sp),
+        ),
+      );
+    }
+
+    final events = match.singlematch.first.events!;
+    events.sort(
       (a, b) => b.time!.elapsed!.compareTo(a.time!.elapsed!),
     );
+
+    if (events.isEmpty) {
+      return Center(
+        child: Text(
+          "No data Found".tr,
+          style: TextStyle(color: Colors.white, fontSize: 16.sp),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       child: Column(
         children: [
-          match.singlematch.first.events!.isEmpty
-              ? Container()
-              : Column(
-                  children: [
+          Column(
+            children: [
                     // Container(
                     //   alignment: Alignment.center,
                     //   height: 41.h,

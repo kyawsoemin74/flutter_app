@@ -1,23 +1,32 @@
-import 'dart:isolate';
-
+import 'package:flutter/foundation.dart';
 import 'package:football_xt_latest/constent.dart';
-import 'package:http/http.dart' as http;
 import '../Custom_Model/leaguemathc.dart';
 import '../api/apihelp.dart';
-import '../model/MAtchlist/matchlist.dart';
 
 // final footballApiPlugin = FootballApi();
 
 class HttpFixturmatch {
   Future<List<Leaguematch>> getFutureMatch({String? date}) async {
-    final ReceivePort receivePort = ReceivePort();
     List<Leaguematch> leaguematch = [];
-    // var data = await footballApiPlugin.getfixturematchbydate(date: date!);
-    var data = await ApiHelp.get(ENDPOINTURL: "${AppConfig.matchesEndpoint}/$date");
-    var match = matchlistFromJson(data.body); // This line might still throw FormatException if API returns non-JSON
-    await Isolate.spawn(
-        matchfilterbyleague, [receivePort.sendPort, match, null]);
-    leaguematch = await receivePort.first as List<Leaguematch>;
+
+    final String requestDate = date ?? DateTime.now().toIso8601String().split('T').first;
+
+    final response = await ApiHelp.get(
+      ENDPOINTURL: AppConfig.matchesByDateEndpoint(requestDate),
+    );
+    debugPrint("HttpFixturmatch response status: ${response.statusCode}");
+    debugPrint("HttpFixturmatch response body length: ${response.body.length}");
+    if (response.statusCode == 200) {
+      debugPrint("HttpFixturmatch response body length: ${response.body.length}");
+      leaguematch = await compute(
+        parseAndGroupMatches,
+        {'jsonString': response.body, 'status': null},
+      );
+      debugPrint("HttpFixturmatch grouped leaguematch length: ${leaguematch.length}");
+    } else {
+      debugPrint("HttpFixturmatch failed with status: ${response.statusCode}, body: ${response.body}");
+    }
+
     return leaguematch;
   }
 }

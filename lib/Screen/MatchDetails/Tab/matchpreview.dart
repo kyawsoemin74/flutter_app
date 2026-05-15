@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
 
 import 'package:hive_flutter/adapters.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../Provider/Ads/ads.dart';
@@ -169,10 +168,7 @@ class _MAtchPreviewPageState extends State<MAtchPreviewPage> {
                                 color: Colors.white,
                               )),
                           SizedBox(width: 10.w),
-                          Text(DateFormat('MMM, EEE dd, hh:mm a').format(
-                              DateTime.fromMicrosecondsSinceEpoch(
-                                  match.singlematch.first.fixture!.timestamp! *
-                                      1000000)))
+                          Text(match.singlematch.first.fixture!.date?.toIso8601String() ?? ''),
                         ],
                       ),
                       SizedBox(height: 10.w),

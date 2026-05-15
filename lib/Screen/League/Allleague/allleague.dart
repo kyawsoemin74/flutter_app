@@ -42,7 +42,7 @@ class _AllleaguePageState extends State<AllleaguePage> {
     setState(() {
       loading = true;
     });
-    await Provider.of<MatchProvider>(context, listen: false).getallleague();
+    // await Provider.of<MatchProvider>(context, listen: false).getallleague();
     setState(() {
       loading = false;
     });

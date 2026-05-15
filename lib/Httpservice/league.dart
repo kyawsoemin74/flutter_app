@@ -9,13 +9,15 @@ import 'fixturematch.dart';
 class HttpLeague {
   Future<List<Allleague>?> getallleague() async {
     // var data = await footballApiPlugin.getallleague;
-    var data = await ApiHelp.get(ENDPOINTURL: "${AppConfig.leaguesEndpoint}/current=true");
-    return allleagueFromJson(data.body);
+    // var data = await ApiHelp.get(ENDPOINTURL: "${AppConfig.leaguesEndpoint}/current=true");
+    // return allleagueFromJson(data.body);
+    return [];
   }
 
   Future<List<Leaguefixture>?> getleaguefixture(
       {int? leagueid, int? season}) async {
-    var data = await ApiHelp.get(ENDPOINTURL: "${AppConfig.fixturesEndpoint}/league=$leagueid/season=$season");
-    return leaguefixtureFromJson(data.body);
+    // var data = await ApiHelp.get(ENDPOINTURL: "${AppConfig.fixturesEndpoint}/league=$leagueid/season=$season");
+    // return leaguefixtureFromJson(data.body);
+    return [];
   }
 }

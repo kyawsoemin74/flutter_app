@@ -143,9 +143,7 @@ class _LeagueCustomMatchState extends State<LeagueCustomMatch> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => DetailsPage(
-                                        fictureid: data.matchId ?? 0, // Use matchId
-                                        team1: 0, // team ID is not in the new flat model
-                                        team2: 0), // team ID is not in the new flat model
+                                        matchId: data.matchId ?? 0),
                                   ));
                             },
                             child: Container(
