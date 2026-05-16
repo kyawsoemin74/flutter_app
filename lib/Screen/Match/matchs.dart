@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:provider/provider.dart';
-import 'package:easy_audience_network/easy_audience_network.dart' as fb;
+import 'package:football_xt_latest/easy_audience_network_stub.dart' as fb;
 
 import '../../Provider/Ads/ads.dart';
 import '../../Provider/filterdate.dart';
@@ -47,7 +47,8 @@ class _MatchspageState extends State<Matchspage>
 
   Future loadmatchdata(DateTime dateTime) async {
     final requestDate = _formatIsoDate(DateTime(dateTime.year, dateTime.month, dateTime.day));
-    Provider.of<MatchProvider>(context, listen: false).gettodayfixturematch(date: requestDate);
+    // ONLY call getfixturematch - it loads all fixtures for the day
+    // Do NOT call gettodayfixturematch - redundant duplicate load
     Provider.of<MatchProvider>(context, listen: false).getfixturematch(date: requestDate);
   }
 
@@ -57,10 +58,21 @@ class _MatchspageState extends State<Matchspage>
  InterstitialAd? _interstitialAd;
   fb.InterstitialAd? _fbinterstitialAd;
   int _numInterstitialLoadAttempts = 0;
+  bool _isDisposed = false;
+  static const int _maxAdRetries = 2;
+
   Future _createInterstitialAd() async {
-     final provider = Provider.of<Adsprovider>(context, listen: false);
+    if (_isDisposed || _numInterstitialLoadAttempts >= _maxAdRetries) {
+      return;
+    }
+    if (!mounted) return;
+
+    final provider = Provider.of<Adsprovider?>(context, listen: false);
+    final String? gInterstitialId = provider?.ads?.gInterstitial;
+    if (gInterstitialId == null || gInterstitialId.isEmpty) return;
+
     InterstitialAd.load(
-      adUnitId: provider.ads!.gInterstitial!,
+      adUnitId: gInterstitialId,
       request: const AdRequest(
         keywords: <String>['foo', 'bar'],
         contentUrl: 'http://foo.com/bar.html',
@@ -68,25 +80,37 @@ class _MatchspageState extends State<Matchspage>
       ),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (InterstitialAd ad) {
+          if (_isDisposed || !mounted) {
+            ad.dispose();
+            return;
+          }
           if (kDebugMode) {
             print('$ad loaded');
           }
           ad.show();
           _numInterstitialLoadAttempts = 0;
-          _interstitialAd!.setImmersiveMode(true);
+          _interstitialAd = ad;
+          try {
+            _interstitialAd!.setImmersiveMode(true);
+          } catch (e) {
+            debugPrint('Immersive mode error: $e');
+          }
         },
         onAdFailedToLoad: (LoadAdError error) {
           _numInterstitialLoadAttempts += 1;
           _interstitialAd = null;
 
-          _createInterstitialAd();
+          // Only retry up to max attempts
+          if (_numInterstitialLoadAttempts < _maxAdRetries && !_isDisposed) {
+            _createInterstitialAd();
+          }
         },
       ),
     );
   }
 
   void showInterstitialAd() {
-    if (_interstitialAd == null) {
+    if (_interstitialAd == null || _isDisposed) {
       if (kDebugMode) {
         print('Warning: attempt to show interstitial before loaded.');
       }
@@ -103,12 +127,16 @@ class _MatchspageState extends State<Matchspage>
           print('$ad onAdDismissedFullScreenContent.');
         }
         ad.dispose();
-        _createInterstitialAd();
+        if (!_isDisposed && mounted) {
+          _createInterstitialAd();
+        }
       },
       onAdFailedToShowFullScreenContent: (InterstitialAd ad, AdError error) {
         print('$ad onAdFailedToShowFullScreenContent: $error');
         ad.dispose();
-        _createInterstitialAd();
+        if (!_isDisposed && mounted) {
+          _createInterstitialAd();
+        }
       },
     );
     _interstitialAd!.show();
@@ -117,10 +145,16 @@ class _MatchspageState extends State<Matchspage>
 
   bool _fbisInterstitialAdLoaded = false;
   Future loadfbInterstitialAd() async {
+    if (_isDisposed || !mounted) return;
+
     final provider = Provider.of<Adsprovider>(context, listen: false);
-    final interstitialAd = fb.InterstitialAd(provider.ads!.fbInterstitial!);
+    final fbInterstitialId = provider.ads?.fbInterstitial;
+    if (fbInterstitialId == null) return;
+
+    final interstitialAd = fb.InterstitialAd(fbInterstitialId);
     interstitialAd.listener = fb.InterstitialAdListener(
       onLoaded: () {
+        if (_isDisposed || !mounted) return;
         print('interstitial ad loaded');
         _fbisInterstitialAdLoaded = true;
       },
@@ -129,7 +163,9 @@ class _MatchspageState extends State<Matchspage>
       },
       onDismissed: () {
         interstitialAd.destroy();
-        loadfbInterstitialAd();
+        if (!_isDisposed && mounted) {
+          loadfbInterstitialAd();
+        }
       },
     );
     interstitialAd.load();
@@ -137,7 +173,7 @@ class _MatchspageState extends State<Matchspage>
   }
 
   showfbInterstitialAd() {
-    if (_fbisInterstitialAdLoaded == true) {
+    if (_fbisInterstitialAdLoaded == true && !_isDisposed) {
       _fbinterstitialAd!.show();
     } else if (kDebugMode) {
       print("Interstial Ad not yet loaded!");
@@ -145,38 +181,69 @@ class _MatchspageState extends State<Matchspage>
   }
 
   bool clickads() {
-    final provider = Provider.of<Adsprovider>(context, listen: false);
-    var box = Hive.box('ads');
-    int clickads = box.get('click') ?? 0;
-    if (clickads % provider.ads!.adsClick! == 0) {
+    final provider = Provider.of<Adsprovider?>(context, listen: false);
+    final box = Hive.isBoxOpen('ads') ? Hive.box('ads') : null;
+    final clickads = box?.get('click') ?? 0;
+    final int adsClick = provider?.ads?.adsClick ?? 1;
+    if (adsClick == 0) {
+      // avoid modulo by zero
+      box?.put('click', clickads + 1);
+      return false;
+    }
+    if (clickads % adsClick == 0) {
       if (kDebugMode) {
         print(true);
       }
-      box.put('click', clickads + 1);
+      box?.put('click', clickads + 1);
       return true;
     } else {
       if (kDebugMode) {
         print(false);
       }
-      box.put('click', clickads + 1);
+      box?.put('click', clickads + 1);
       return false;
     }
   }
 
   Future loadinterstitialads() async {
+    if (_isDisposed || !mounted) return;
+
     final provider = Provider.of<Adsprovider>(context, listen: false);
+    if (provider.ads == null) return;
+
     if (provider.ads!.google == 1 && clickads() == true) {
       _createInterstitialAd();
     } else if (provider.ads!.fb == 1 && clickads() == true) {
-      loadfbInterstitialAd().then((value) =>
-          Future.delayed(Duration(seconds: 5), () => showfbInterstitialAd()));
+      await loadfbInterstitialAd();
+      if (!_isDisposed && mounted) {
+        await Future.delayed(Duration(seconds: 5));
+        if (!_isDisposed && mounted) {
+          showfbInterstitialAd();
+        }
+      }
     }
   }
+
   @override
   void initState() {
-loadinterstitialads();
+    _isDisposed = false;
+    // Schedule ad load after UI is ready, not blocking
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_isDisposed) {
+        loadinterstitialads();
+      }
+    });
+
     loaddate(_selectdate);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _interstitialAd?.dispose();
+    _fbinterstitialAd?.destroy();
+    super.dispose();
   }
 
   @override

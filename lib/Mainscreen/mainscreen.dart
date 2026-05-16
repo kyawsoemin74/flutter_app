@@ -12,7 +12,8 @@ import '../Screen/Match/matchs.dart';
 import '../Screen/News/news.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../Provider/Ads/ads.dart';
-import 'package:easy_audience_network/easy_audience_network.dart' as fb;
+import '../model/Ads/ads.dart';
+import 'package:football_xt_latest/easy_audience_network_stub.dart' as fb;
 
 class MAinScreenpage extends StatefulWidget {
   const MAinScreenpage({super.key});
@@ -30,14 +31,17 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
 
   BannerAd? _anchoredAdaptiveAd;
   bool _isLoaded = false;
+  bool _hasInitializedAdLoad = false;
+  bool _isDisposed = false;
 
-  Widget currentAd = const SizedBox(
-    height: 0,
-    width: 0,
-  );
+  Widget currentAd = const SizedBox.shrink();
 
   Future<void> _loadAd() async {
+    if (!mounted || _isDisposed) return;
     final provider = Provider.of<Adsprovider>(context, listen: false);
+    final bannerId = provider.ads?.gBanner;
+    if (bannerId == null || bannerId.isEmpty) return;
+
     final AnchoredAdaptiveBannerAdSize? size =
         await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
             MediaQuery.of(context).size.width.truncate());
@@ -48,12 +52,13 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
     }
 
     _anchoredAdaptiveAd = BannerAd(
-      adUnitId: provider.ads!.gBanner!,
+      adUnitId: bannerId,
       size: size,
-      request: AdRequest(),
+      request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (Ad ad) {
           debugPrint('$ad loaded: ${ad.responseInfo}');
+          if (!mounted || _isDisposed) return;
           setState(() {
             _anchoredAdaptiveAd = ad as BannerAd;
             _isLoaded = true;
@@ -65,29 +70,35 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
         },
       ),
     );
-    return _anchoredAdaptiveAd!.load();
+    await _anchoredAdaptiveAd?.load();
   }
 
   Widget _showfbBannerAd(BuildContext context) {
     final provider = Provider.of<Adsprovider>(context, listen: false);
+    final fbBannerId = provider.ads?.fbBanner;
+    if (fbBannerId == null || fbBannerId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return fb.BannerAd(
-      placementId: provider.ads!.fbBanner!,
+      placementId: fbBannerId,
       bannerSize: fb.BannerSize.STANDARD,
       listener: fb.BannerAdListener(
         onClicked: () {
-          debugPrint("Banner Ad: click");
+          debugPrint('Banner Ad: click');
         },
         onError: (code, message) {
-          debugPrint("Banner Ad: $code -->  $message");
+          debugPrint('Banner Ad: $code -->  $message');
         },
         onLoaded: () {
+          if (!mounted || _isDisposed) return;
           setState(() {
             _isLoaded = true;
           });
-          debugPrint("Banner Ad: loaded");
+          debugPrint('Banner Ad: loaded');
         },
         onLoggingImpression: () {
-          debugPrint("Banner Ad: impression");
+          debugPrint('Banner Ad: impression');
         },
       ),
     );
@@ -95,20 +106,20 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
 
   // facebook ads end
 
-  Future loadads() async {
+  Future<void> _prepareFbBanner() async {
     final provider = Provider.of<Adsprovider>(context, listen: false);
-    if (provider.ads!.fb == 1) {
+    if (provider.ads?.fb == 1) {
       currentAd = _showfbBannerAd(context);
-    } else {
-      currentAd = const SizedBox(
-        height: 0,
-        width: 0,
-      );
+      if (mounted && !_isDisposed) {
+        setState(() {});
+      }
     }
-    setState(() {});
   }
 
   Widget bannerads() {
+    if (_anchoredAdaptiveAd == null) {
+      return const SizedBox.shrink();
+    }
     return Container(
       color: Colors.transparent,
       width: _anchoredAdaptiveAd!.size.width.toDouble(),
@@ -120,34 +131,43 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final provider = Provider.of<Adsprovider>(context, listen: false);
-    if (provider.isLoaded && provider.ads != null && provider.ads!.google == 1) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _loadAd();
-      });
-    }
   }
 
   @override
   void dispose() {
+    _isDisposed = true;
     _anchoredAdaptiveAd?.dispose();
     super.dispose();
   }
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<Adsprovider>(context);
-    // Ensure ads is loaded, otherwise show loading
-    if (!provider.isLoaded) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+    final ads = context.select<Adsprovider, Ads?>((provider) => provider.ads);
+    final isLoaded = context.select<Adsprovider, bool>((provider) => provider.isLoaded);
+
+    if (isLoaded && ads != null && !_hasInitializedAdLoad) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_hasInitializedAdLoad || _isDisposed) return;
+        if (ads.google == 1) {
+          _loadAd();
+        }
+        if (ads.fb == 1) {
+          _prepareFbBanner();
+        }
+      });
+      _hasInitializedAdLoad = true;
     }
+
+    final bool hasFbAd = ads?.fb == 1;
+    final bool hasGoogleAd = ads?.google == 1;
+    final Widget adWidget = hasFbAd
+        ? currentAd
+        : hasGoogleAd
+            ? _isLoaded
+                ? bannerads()
+                : const SizedBox(height: 60)
+            : const SizedBox.shrink();
+
     return Scaffold(
       key: _key,
       endDrawer: const DrawerPage(),
@@ -155,13 +175,7 @@ class _MAinScreenpageState extends State<MAinScreenpage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            provider.ads?.fb == 1
-                ? currentAd
-                : provider.ads?.google == 1
-                    ? _isLoaded
-                        ? bannerads()
-                        : SizedBox()
-                    : SizedBox(),
+            adWidget,
             Container(
               color: AppConfig.scaffoldBgColor,
               height: 60,

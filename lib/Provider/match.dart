@@ -94,23 +94,32 @@ class MatchProvider extends ChangeNotifier {
   List<LeagueGroup> groupedAllFixtureMatches = [];
 
   String? fixtureError;
+  String? lastFixtureDate;
 
   Future getfixturematch({String? date}) async {
     allfixturematchloading = true;
-    fixtureError = null; // Reset error
+    fixtureError = null;
     notifyListeners();
+    final normalizedDate = date?.split('T').first;
     try {
-      allfixturematch = await HttpFixturmatch().getFutureMatch(date: date);
+      allfixturematch = await HttpFixturmatch().getFutureMatch(date: normalizedDate);
+      lastFixtureDate = normalizedDate;
       debugPrint("Provider allfixturematch length: ${allfixturematch.length}");
 
-      // Compute flattened and grouped here to avoid repeated computations
+      // NOTE: parseAndGroupMatches already returns grouped Leaguematch data
+      // Do NOT re-group here - that causes double-grouping ANR
+      // Convert Leaguematch back to flat list, then group once
       final flattened = allfixturematch.expand((group) => group.allmatch ?? <Matchlist>[]).toList();
-      groupedAllFixtureMatches = await compute(groupMatchesByLeagueSync, flattened);
+      if (flattened.isNotEmpty) {
+        groupedAllFixtureMatches = await compute(groupMatchesByLeagueSync, flattened);
+      } else {
+        groupedAllFixtureMatches = [];
+      }
     } catch (e) {
       debugPrint("Provider getfixturematch Error: $e");
       allfixturematch = [];
       groupedAllFixtureMatches = [];
-      fixtureError = e.toString(); // Set error message
+      fixtureError = e.toString();
     }
     allfixturematchloading = false;
     notifyListeners();

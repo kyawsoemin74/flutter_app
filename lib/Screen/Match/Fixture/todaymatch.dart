@@ -61,9 +61,14 @@ class TodayMatchPage extends StatefulWidget {
 class _TodayMatchPageState extends State<TodayMatchPage> {
   Future<void> loaddata() async {
     final selectedDate = DateTime(widget.dateTime.year, widget.dateTime.month, widget.dateTime.day);
-    await Provider.of<MatchProvider>(context, listen: false).getfixturematch(
-      date: selectedDate.toIso8601String().split('T').first,
-    );
+    final dateString = selectedDate.toIso8601String().split('T').first;
+    final provider = Provider.of<MatchProvider>(context, listen: false);
+
+    if (provider.lastFixtureDate == dateString && provider.groupedAllFixtureMatches.isNotEmpty) {
+      return;
+    }
+
+    await provider.getfixturematch(date: dateString);
   }
 
   @override
@@ -80,10 +85,8 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
         final loading = data.$1;
         final groups = data.$2;
 
-        if (loading) {
-          return const Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          );
+        if (loading && groups.isEmpty) {
+          return const TodayMatchSkeleton();
         }
 
         if (groups.isEmpty) {
@@ -97,6 +100,100 @@ class _TodayMatchPageState extends State<TodayMatchPage> {
 
         return GroupedMatchList(groups: groups);
       },
+    );
+  }
+}
+
+class TodayMatchSkeleton extends StatelessWidget {
+  const TodayMatchSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: List.generate(
+        3,
+        (index) => SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          sliver: SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white12,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SkeletonBox(width: 140, height: 16),
+                      const SizedBox(height: 10),
+                      const SkeletonBox(width: 90, height: 12),
+                    ],
+                  ),
+                ),
+                Column(
+                  children: List.generate(
+                    2,
+                    (matchIndex) => Container(
+                      margin: EdgeInsets.only(bottom: matchIndex == 1 ? 0 : 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white10,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                SkeletonBox(width: 80, height: 12),
+                                SizedBox(height: 8),
+                                SkeletonBox(width: 90, height: 10),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: const [
+                              SkeletonBox(width: 42, height: 22),
+                              SizedBox(height: 8),
+                              SkeletonBox(width: 30, height: 10),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SkeletonBox extends StatelessWidget {
+  final double width;
+  final double height;
+
+  const SkeletonBox({super.key, required this.width, required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white12,
+        borderRadius: BorderRadius.circular(6),
+      ),
     );
   }
 }

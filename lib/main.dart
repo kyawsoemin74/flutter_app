@@ -4,8 +4,6 @@ import 'package:football_xt_latest/constent.dart';
 import 'package:football_xt_latest/splash.dart';
 
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-
 import 'package:provider/provider.dart';
 import 'Provider/Ads/ads.dart';
 import 'Provider/filterdate.dart';
@@ -16,15 +14,10 @@ void main() async {
   // 1. Flutter engine ကို အရင်နှိုးမယ်
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    // 2. Data သိမ်းမယ့် Hive ကို စိတ်ချရအောင် await လုပ်မယ်
-    await Hive.initFlutter();
-    await Hive.openBox('ads');
-  } catch (e) {
-    debugPrint("Hive Error: $e"); // Error တက်ရင်လည်း App ဆက်ပွင့်အောင် လုပ်ထားတာပါ
-  }
+  // 2. Hive startup is deferred until after the first visible frame.
+  //    This prevents a black screen before the splash screen renders.
 
-  // 3. MobileAds ကို background မှာပဲ ပစ်ထားမယ် (Hanging မဖြစ်အောင်)
+  // 3. MobileAds can initialize in background without awaiting startup.
   MobileAds.instance.initialize();
 
   runApp(MultiProvider(

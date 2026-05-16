@@ -9,7 +9,7 @@ import '../../../Ads_Code/ads_code.dart';
 
 import '../../../Provider/Ads/ads.dart';
 import '../../../Provider/match.dart';
-import 'package:easy_audience_network/easy_audience_network.dart' as fb;
+import 'package:football_xt_latest/easy_audience_network_stub.dart' as fb;
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 
@@ -128,19 +128,19 @@ class _HeadToHeadPageState extends State<HeadToHeadPage> {
 
   bool clickads() {
     final provider = Provider.of<Adsprovider>(context, listen: false);
-    var box = Hive.box('ads');
-    int clickads = box.get('click') ?? 0;
+    final box = Hive.isBoxOpen('ads') ? Hive.box('ads') : null;
+    final clickads = box?.get('click') ?? 0;
     if (clickads % provider.ads!.adsClick! == 0) {
       if (kDebugMode) {
         print(true);
       }
-      box.put('click', clickads + 1);
+      box?.put('click', clickads + 1);
       return true;
     } else {
       if (kDebugMode) {
         print(false);
       }
-      box.put('click', clickads + 1);
+      box?.put('click', clickads + 1);
       return false;
     }
   }

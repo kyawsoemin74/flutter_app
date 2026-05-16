@@ -14,7 +14,7 @@ import 'Tab/statis.dart';
 import 'Tab/table.dart';
 import 'Tab/timeline.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:easy_audience_network/easy_audience_network.dart' as fb;
+import 'package:football_xt_latest/easy_audience_network_stub.dart' as fb;
 
 class DetailsPage extends StatefulWidget {
   final int matchId;
@@ -85,7 +85,10 @@ class _DetailsPageState extends State<DetailsPage>
     width: 0,
   );
   Future<void> _loadAd() async {
-    final provider = Provider.of<Adsprovider>(context, listen: false);
+    final provider = Provider.of<Adsprovider?>(context, listen: false);
+    final String? gBannerId = provider?.ads?.gBanner;
+    if (gBannerId == null || gBannerId.isEmpty) return;
+
     final AnchoredAdaptiveBannerAdSize? size =
         await AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(
             MediaQuery.of(context).size.width.truncate());
@@ -96,12 +99,13 @@ class _DetailsPageState extends State<DetailsPage>
     }
 
     _anchoredAdaptiveAd = BannerAd(
-      adUnitId: provider.ads!.gBanner!,
+      adUnitId: gBannerId,
       size: size,
       request: AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (Ad ad) {
           print('$ad loaded: ${ad.responseInfo}');
+          if (!mounted) return;
           setState(() {
             _anchoredAdaptiveAd = ad as BannerAd;
             _isLoaded = true;
@@ -117,9 +121,12 @@ class _DetailsPageState extends State<DetailsPage>
   }
 
   Widget _showfbBannerAd(BuildContext context) {
-    final provider = Provider.of<Adsprovider>(context, listen: false);
+    final provider = Provider.of<Adsprovider?>(context, listen: false);
+    final String? fbBannerId = provider?.ads?.fbBanner;
+    if (fbBannerId == null || fbBannerId.isEmpty) return const SizedBox.shrink();
+
     return fb.BannerAd(
-      placementId: provider.ads!.fbBanner!,
+      placementId: fbBannerId,
       bannerSize: fb.BannerSize.STANDARD,
       listener: fb.BannerAdListener(
         onClicked: () {
@@ -129,6 +136,7 @@ class _DetailsPageState extends State<DetailsPage>
           print("Banner Ad: $code -->  $message");
         },
         onLoaded: () {
+          if (!mounted) return;
           setState(() {
             _isLoaded = true;
           });
@@ -144,8 +152,9 @@ class _DetailsPageState extends State<DetailsPage>
   // facebook ads end
 
   Future loadads() async {
-    final provider = Provider.of<Adsprovider>(context, listen: false);
-    if (provider.ads!.fb == 1) {
+    final provider = Provider.of<Adsprovider?>(context, listen: false);
+    final bool hasFb = provider?.ads?.fb == 1;
+    if (hasFb) {
       currentAd = _showfbBannerAd(context);
     } else {
       currentAd = const SizedBox(
@@ -153,14 +162,18 @@ class _DetailsPageState extends State<DetailsPage>
         width: 0,
       );
     }
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   Widget bannerads() {
+    if (_anchoredAdaptiveAd == null) {
+      return const SizedBox.shrink();
+    }
+    final size = _anchoredAdaptiveAd!.size;
     return Container(
       color: Colors.transparent,
-      width: _anchoredAdaptiveAd!.size.width.toDouble(),
-      height: _anchoredAdaptiveAd!.size.height.toDouble(),
+      width: size.width.toDouble(),
+      height: size.height.toDouble(),
       child: AdWidget(ad: _anchoredAdaptiveAd!),
     );
   }
@@ -168,8 +181,8 @@ class _DetailsPageState extends State<DetailsPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final provider = Provider.of<Adsprovider>(context, listen: false);
-    if (provider.ads!.google == 1) {
+    final provider = Provider.of<Adsprovider?>(context, listen: false);
+    if (provider != null && provider.ads != null && provider.ads!.google == 1) {
       _loadAd();
     }
   }
@@ -194,15 +207,17 @@ class _DetailsPageState extends State<DetailsPage>
   @override
   Widget build(BuildContext context) {
     final match = Provider.of<MatchProvider>(context);
-    final provider = Provider.of<Adsprovider>(context);
+    final provider = Provider.of<Adsprovider?>(context);
+    final bool hasFb = provider?.ads?.fb == 1;
+    final bool hasGoogle = provider?.ads?.google == 1;
     return Scaffold(
-      bottomNavigationBar: provider.ads!.fb == 1
+      bottomNavigationBar: hasFb
           ? currentAd
-          : provider.ads!.google == 1
+          : hasGoogle
               ? _isLoaded
                   ? bannerads()
-                  : SizedBox()
-              : SizedBox(),
+                  : const SizedBox()
+              : const SizedBox(),
       appBar: AppBar(
         title: Text("Match Details".tr),
       ),

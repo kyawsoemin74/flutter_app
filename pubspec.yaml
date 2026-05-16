@@ -55,7 +55,9 @@ dependencies:
   flutter_svg: ^2.0.17
   get: ^4.7.2
   slide_countdown: ^2.0.2
-  easy_audience_network: ^0.0.7
+  # easy_audience_network: ^0.0.7
+  # Temporarily disabled for release testing due to resource build error
+  # Re-enable after upgrading the plugin or verifying SDK on build machine
   country_flags: ^1.0.0
 
 dev_dependencies:

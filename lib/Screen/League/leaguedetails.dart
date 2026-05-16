@@ -12,7 +12,7 @@ import 'Tabbar/Fixture/Tabbar/recentmatch.dart';
 import 'Tabbar/standing.dart';
 import 'Tabbar/topscore.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'package:easy_audience_network/easy_audience_network.dart' as fb;
+import 'package:football_xt_latest/easy_audience_network_stub.dart' as fb;
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class LeaguedetailsPage extends StatefulWidget {

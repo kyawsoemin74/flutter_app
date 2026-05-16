@@ -165,16 +165,25 @@ class Matchlist {
 
   factory Matchlist.fromJson(Map<String, dynamic> json) {
     try {
-      final statusRaw = json['status'];
+      // Cache commonly accessed values
+      final matchId = _toInt(json['match_id'] ?? json['fixture_id']);
+      final leagueId = _toInt(json['league_id'] ?? json['leagueid']);
+      
+      // Early return for invalid matches
+      if (matchId == null || leagueId == null) {
+        return _createMinimalMatch();
+      }
+
+      // Status parsing with single assignment
       String? statusValue;
+      final statusRaw = json['status'];
       if (statusRaw is String) {
         statusValue = statusRaw.trim();
       } else if (statusRaw is Map) {
-        statusValue = statusRaw['short']?.toString() ?? statusRaw['long']?.toString();
+        statusValue = (statusRaw['short'] ?? statusRaw['long'])?.toString();
       }
 
-      final elapsedValue = _toInt(json['elapsed'] ?? json['status']?['elapsed'] ?? json['fixture']?['status']?['elapsed'] ?? json['time']?['elapsed']);
-
+      // Score extraction with fallback hierarchy
       int? homeScoreValue = _toInt(json['home_score'] ?? json['homeScore'] ?? json['goals']?['home']);
       int? awayScoreValue = _toInt(json['away_score'] ?? json['awayScore'] ?? json['goals']?['away']);
 
@@ -182,28 +191,29 @@ class Matchlist {
       if ((homeScoreValue == null || awayScoreValue == null) && scoreValue is Map) {
         homeScoreValue ??= _toInt(scoreValue['home'] ?? scoreValue['home_score'] ?? scoreValue['homeScore']);
         awayScoreValue ??= _toInt(scoreValue['away'] ?? scoreValue['away_score'] ?? scoreValue['awayScore']);
-      }
-      if ((homeScoreValue == null || awayScoreValue == null) && scoreValue is String) {
-        final parts = scoreValue.split('-').map((part) => part.trim()).toList();
+      } else if ((homeScoreValue == null || awayScoreValue == null) && scoreValue is String && scoreValue.isNotEmpty) {
+        // Only split if we still need scores
+        final parts = scoreValue.split('-');
         if (parts.length == 2) {
-          homeScoreValue ??= _toInt(parts[0]);
-          awayScoreValue ??= _toInt(parts[1]);
+          homeScoreValue ??= _toInt(parts[0].trim());
+          awayScoreValue ??= _toInt(parts[1].trim());
         }
       }
 
+      final elapsedValue = _toInt(json['elapsed'] ?? json['status']?['elapsed'] ?? json['fixture']?['status']?['elapsed'] ?? json['time']?['elapsed']);
       final matchTimeValue = json['match_time']?.toString();
-      final statusText = statusValue?.trim().toUpperCase() ?? '';
+      final statusText = (statusValue?.trim() ?? '').toUpperCase();
 
       return Matchlist(
-        matchId: _toInt(json['match_id'] ?? json['fixture_id']),
-        leagueId: _toInt(json['league_id'] ?? json['leagueid']),
-        leagueName: json['league_name'] ?? json['leagueName'],
+        matchId: matchId,
+        leagueId: leagueId,
+        leagueName: json['league_name'] ?? json['leagueName'] ?? 'Unknown League',
         leagueLogo: json['league_logo'] ?? json['leagueLogo'],
-        country: json['country'] ?? json['country_name'] ?? json['countryName'],
+        country: json['country'] ?? json['country_name'] ?? json['countryName'] ?? 'Unknown',
         countryFlag: json['country_flag'] ?? json['countryFlag'],
-        homeTeam: json['home_team'] ?? json['homeTeam'],
+        homeTeam: json['home_team'] ?? json['homeTeam'] ?? 'Unknown',
         homeLogo: json['home_logo'] ?? json['homeLogo'] ?? json['home_team_logo'] ?? json['homeTeamLogo'],
-        awayTeam: json['away_team'] ?? json['awayTeam'],
+        awayTeam: json['away_team'] ?? json['awayTeam'] ?? 'Unknown',
         awayLogo: json['away_logo'] ?? json['awayLogo'] ?? json['away_team_logo'] ?? json['awayTeamLogo'],
         status: statusValue,
         matchTime: matchTimeValue,
@@ -225,32 +235,35 @@ class Matchlist {
         ),
       );
     } catch (e) {
-      debugPrint("Error parsing Matchlist from JSON: $e, JSON: $json");
-      // Return a minimal Matchlist to avoid crashing the list
-      return Matchlist(
-        matchId: null,
-        leagueId: null,
-        leagueName: 'Unknown League',
-        leagueLogo: null,
-        country: 'Unknown Country',
-        countryFlag: null,
-        homeTeam: 'Unknown Home',
-        homeLogo: null,
-        awayTeam: 'Unknown Away',
-        awayLogo: null,
-        status: 'NS',
-        matchTime: null,
-        score: null,
-        elapsed: null,
-        homeScore: null,
-        awayScore: null,
-        referee: null,
-        venueName: null,
-        venueCity: null,
-        leagueRound: null,
-        matchStatusDisplay: '--:--',
-      );
+      debugPrint("Error parsing Matchlist from JSON: $e");
+      return _createMinimalMatch();
     }
+  }
+
+  static Matchlist _createMinimalMatch() {
+    return Matchlist(
+      matchId: null,
+      leagueId: null,
+      leagueName: 'Unknown',
+      leagueLogo: null,
+      country: 'Unknown',
+      countryFlag: null,
+      homeTeam: 'Unknown',
+      homeLogo: null,
+      awayTeam: 'Unknown',
+      awayLogo: null,
+      status: 'NS',
+      matchTime: null,
+      score: null,
+      elapsed: null,
+      homeScore: null,
+      awayScore: null,
+      referee: null,
+      venueName: null,
+      venueCity: null,
+      leagueRound: null,
+      matchStatusDisplay: '--:--',
+    );
   }
 
   static String _computeStatusDisplay(
@@ -261,30 +274,27 @@ class Matchlist {
     String? score,
     String? matchTime,
   ) {
-    final isLiveStatus = status == 'HT' || status == '1H' || status == '2H' || status == 'ET' || status == 'LIVE' || int.tryParse(status) != null;
-    if (isLiveStatus) {
-      final home = homeScore ?? 0;
-      final away = awayScore ?? 0;
-      return '$home - $away';
+    // Fast path for empty status
+    if (status.isEmpty || status == 'NS') {
+      return matchTime?.isNotEmpty == true ? _formatMatchTime(matchTime) : '--:--';
     }
 
-    final scoreText = (homeScore != null && awayScore != null) ? '$homeScore - $awayScore' : null;
+    // Check if live or contains digit (minute marker)
+    if (status == 'HT' || status == '1H' || status == '2H' || status == 'ET' || status == 'LIVE' || (status.isNotEmpty && int.tryParse(status) != null)) {
+      return homeScore != null && awayScore != null ? '$homeScore - $awayScore' : '$homeScore vs $awayScore';
+    }
 
+    // Postponed status
     if (status == 'PST' || status == 'PPD' || status == 'POSTPONED') {
       return 'Postponed';
     }
 
+    // Finished match
     if (status == 'FT' || status == 'AET' || status == 'PEN') {
-      return scoreText ?? (score?.trim().isNotEmpty == true ? score!.trim() : 'FT');
-    }
-
-    if (status == '1H' || status == '2H' || status == 'ET') {
-      final elapsedText = elapsed != null ? "$elapsed'" : status;
-      return scoreText != null ? '$elapsedText ($scoreText)' : elapsedText;
-    }
-
-    if (status == 'NS' || status.isEmpty) {
-      return _formatMatchTime(matchTime);
+      if (homeScore != null && awayScore != null) {
+        return '$homeScore - $awayScore';
+      }
+      return score?.trim().isNotEmpty == true ? score!.trim() : 'FT';
     }
 
     return status;
