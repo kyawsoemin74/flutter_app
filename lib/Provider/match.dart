@@ -140,16 +140,19 @@ class MatchProvider extends ChangeNotifier {
 
   List<Odd> odds = [];
   bool isLoadingOdds = false;
+  String? oddsError;
 
   Future<void> getOdds({int? matchid}) async {
     if (matchid == null) return;
     isLoadingOdds = true;
+    oddsError = null;
     notifyListeners();
     try {
       odds = await MatchDetailsService().getMatchOdds(matchid);
     } catch (e) {
       debugPrint("Provider getOdds Error: $e");
       odds = [];
+      oddsError = "Unable to load odds";
     }
     isLoadingOdds = false;
     notifyListeners();
@@ -160,10 +163,12 @@ class MatchProvider extends ChangeNotifier {
 
   Future<void> getMatchEvents({int? matchid}) async {
     if (matchid == null) return;
+    debugPrint('Provider getMatchEvents start for matchid: $matchid');
     isLoadingEvents = true;
     notifyListeners();
     try {
       events = await MatchDetailsService().getMatchEvents(matchid);
+      debugPrint('Provider getMatchEvents result count: ${events.length}');
     } catch (e) {
       debugPrint("Provider getMatchEvents Error: $e");
       events = [];

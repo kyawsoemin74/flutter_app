@@ -148,6 +148,8 @@ class _MAtchPreviewPageState extends State<MAtchPreviewPage> {
   @override
   Widget build(BuildContext context) {
     final match = Provider.of<MatchProvider>(context);
+    // Guard: if there's no singlematch data yet, avoid calling .first on empty list
+    if (match.singlematch.isEmpty) return const SizedBox.shrink();
     return match.singlematch.first.fixture!.venue!.id == null
         ? Container()
         : Column(
@@ -223,120 +225,6 @@ class _MAtchPreviewPageState extends State<MAtchPreviewPage> {
             ],
           );
 
-    // : FutureBuilder(
-    //     future: httpVenues()
-    //         .getvenues(venuid: match.singlematch.first.fixture!.venue!.id!),
-    //     builder: (context, snapshot) {
-    //       if (snapshot.hasData) {
-    //         var data = snapshot.data[0];
-    //         return Column(
-    //           children: [
-    //             Card(
-    //               color: Colors.white.withOpacity(0.1),
-    //               child: Container(
-    //                 padding: EdgeInsets.all(10.r),
-    //                 child: Column(
-    //                   children: [
-    //                     Row(
-    //                       children: [
-    //                         Container(
-    //                             height: 20.h,
-    //                             width: 20.w,
-    //                             child: Icon(
-    //                               Icons.calendar_month,
-    //                               color: Colors.white,
-    //                             )),
-    //                         SizedBox(width: 10.w),
-    //                         Text(DateFormat('MMM, EEE dd, hh:mm a').format(
-    //                             DateTime.fromMicrosecondsSinceEpoch(match
-    //                                     .singlematch
-    //                                     .first
-    //                                     .fixture!
-    //                                     .timestamp! *
-    //                                 1000000)))
-    //                       ],
-    //                     ),
-    //                     SizedBox(height: 10.w),
-    //                     Row(
-    //                       children: [
-    //                         Container(
-    //                           height: 20.h,
-    //                           width: 20.w,
-    //                           child: Image.network(
-    //                             match.singlematch.first.league!.logo!,
-    //                             height: 20.h,
-    //                           ),
-    //                         ),
-    //                         SizedBox(width: 10.w),
-    //                         Text(
-    //                             "${match.singlematch.first.league!.name} - ${match.singlematch.first.league!.round}")
-    //                       ],
-    //                     ),
-    //                     SizedBox(height: 10.w),
-    //                     Row(
-    //                       children: [
-    //                         Container(
-    //                           height: 20.h,
-    //                           width: 20.w,
-    //                           child: Icon(
-    //                             Icons.location_pin,
-    //                             color: Colors.white,
-    //                           ),
-    //                         ),
-    //                         SizedBox(width: 10.w),
-    //                         Text(data['address'] ?? ""),
-    //                       ],
-    //                     ),
-    //                     SizedBox(height: 10.w),
-    //                     Row(
-    //                       children: [
-    //                         Container(
-    //                           height: 20.h,
-    //                           width: 20.w,
-    //                           child: Image.network(data['image']),
-    //                         ),
-    //                         SizedBox(width: 10.w),
-    //                         Text(data['country']),
-    //                       ],
-    //                     )
-    //                   ],
-    //                 ),
-    //               ),
-    //             ),
-    //           ],
-    //         );
 
-    //         // return ListView.builder(
-    //         //   itemCount: snapshot.data.length,
-    //         //   itemBuilder: (context, index) {
-    //         //     var data = snapshot.data[index];
-    //         //     return ListTile(
-    //         //       leading:
-    //         //           CircleAvatar(backgroundImage: NetworkImage(data['image'])),
-    //         //       title: Text(data['name']),
-    //         //       isThreeLine: true,
-    //         //       subtitle: Column(
-    //         //         crossAxisAlignment: CrossAxisAlignment.start,
-    //         //         children: [
-    //         //           Text(
-    //         //             "Address: ${data['address']}",
-    //         //             style: TextStyle(color: Colors.white),
-    //         //           ),
-    //         //           Text(
-    //         //             "city: ${data['city']}",
-    //         //             style: TextStyle(color: Colors.white),
-    //         //           )
-    //         //         ],
-    //         //       ),
-    //         //     );
-    //         //   },
-    //         // );
-    //       } else {
-    //         return Center(
-    //           child: CircularProgressIndicator(),
-    //         );
-    //       }
-    //     },
-    //   );
   }
 }

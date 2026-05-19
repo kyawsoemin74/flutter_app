@@ -1,5 +1,6 @@
 // Updated at 2026-05-10
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:football_xt_latest/constent.dart';
 import '../api/apihelp.dart';
 import '../model/Headtohead/headtohead.dart';
@@ -43,36 +44,45 @@ class MatchDetailsService {
       final response = await ApiHelp.get(ENDPOINTURL: endpoint);
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        final list = decoded is List ? decoded : (decoded['data'] ?? decoded['result'] ?? []);
+        final list = decoded is List
+            ? decoded
+            : (decoded['odds'] ?? decoded['data'] ?? decoded['result'] ?? []);
         if (list is List) {
-          return list.map<Odd>((item) => Odd.fromJson(item)).toList();
+          return list.map<Odd>((item) => Odd.fromJson(item as Map<String, dynamic>)).toList();
         }
-        print('MatchDetailsService getMatchOdds: Expected List but got ${list.runtimeType}');
+        debugPrint('MatchDetailsService getMatchOdds: Expected List but got ${list.runtimeType}');
       } else {
-        print('MatchDetailsService getMatchOdds non-200 status: ${response.statusCode}');
+        debugPrint('MatchDetailsService getMatchOdds non-200 status: ${response.statusCode}');
       }
     } catch (e) {
-      print('MatchDetailsService getMatchOdds Error: $e');
+      debugPrint('MatchDetailsService getMatchOdds Error: $e');
     }
-    return [];
+    throw Exception('Unable to load odds');
   }
 
   Future<List<Matchevent>> getMatchEvents(int id) async {
     final endpoint = AppConfig.matchEventsEndpoint(id.toString());
     try {
       final response = await ApiHelp.get(ENDPOINTURL: endpoint);
+      debugPrint('EVENT API REQUEST: $endpoint');
+      debugPrint('EVENT API STATUS: ${response.statusCode}');
+      debugPrint('EVENT API RESPONSE: ${response.body}');
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        final list = decoded is List ? decoded : (decoded['data'] ?? decoded['result'] ?? []);
+        final list = decoded is List
+            ? decoded
+            : (decoded['response'] ?? decoded['data'] ?? decoded['result'] ?? []);
         if (list is List) {
-          return list.map<Matchevent>((item) => Matchevent.fromJson(item)).toList();
+          final parsed = list.map<Matchevent>((item) => Matchevent.fromJson(item)).toList();
+          debugPrint('EVENT API PARSED: ${parsed.length} events');
+          return parsed;
         }
-        print('MatchDetailsService getMatchEvents: Expected List but got ${list.runtimeType}');
+        debugPrint('MatchDetailsService getMatchEvents: Expected List but got ${list.runtimeType}');
       } else {
-        print('MatchDetailsService getMatchEvents non-200 status: ${response.statusCode}');
+        debugPrint('MatchDetailsService getMatchEvents non-200 status: ${response.statusCode}');
       }
     } catch (e) {
-      print('MatchDetailsService getMatchEvents Error: $e');
+      debugPrint('MatchDetailsService getMatchEvents Error: $e');
     }
     return [];
   }
