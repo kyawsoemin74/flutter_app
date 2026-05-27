@@ -62,6 +62,8 @@ class _DetailsPageState extends State<DetailsPage>
       matchProvider.fetchMatchDetails(widget.matchId),
       matchProvider.getsinglematchinfo(widget.matchId),
       matchProvider.getMatchEvents(matchid: widget.matchId),
+      matchProvider.getMatchLineup(matchid: widget.matchId),
+      matchProvider.geth2h(matchid: widget.matchId),
     ]);
     setState(() {
       loading = false;
@@ -75,7 +77,6 @@ class _DetailsPageState extends State<DetailsPage>
 
     switch (currentIndex) {
       case 0:
-      case 2:
         if (matchProvider.singlematch.isEmpty) {
           matchProvider.getsinglematchinfo(widget.matchId);
         }
@@ -83,6 +84,12 @@ class _DetailsPageState extends State<DetailsPage>
       case 1:
         if (matchProvider.odds.isEmpty) {
           matchProvider.getOdds(matchid: widget.matchId);
+        }
+        break;
+      case 2:
+        debugPrint('LINEUP TAB OPENED: matchId=${widget.matchId}');
+        if (matchProvider.lineups.isEmpty) {
+          matchProvider.getMatchLineup(matchid: widget.matchId);
         }
         break;
       case 3:

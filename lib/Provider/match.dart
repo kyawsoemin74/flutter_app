@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:football_xt_latest/model/MAtchlist/matchlist.dart';
 
@@ -17,7 +16,6 @@ import '../model/All_League/all_league.dart' as all_league;
 import '../model/Odd/odd.dart';
 import '../model/Headtohead/headtohead.dart';
 import '../model/LeagueFixture/leaguefixture.dart';
-import '../model/Lineup/lineup.dart';
 import '../model/M3u8/livestream2.dart';
 import '../model/MatchEvent/matchevent.dart';
 import '../model/SingleFixture/singlefixture.dart';
@@ -177,18 +175,28 @@ class MatchProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<Lineup> lineups = [];
+  List<Lineups> lineups = [];
   bool isLoadingLineup = false;
+  String? lineupError;
+  bool lineupUnavailable = false;
 
   Future<void> getMatchLineup({int? matchid}) async {
     if (matchid == null) return;
     isLoadingLineup = true;
+    lineupError = null;
+    lineupUnavailable = false;
+    lineups.clear();
     notifyListeners();
     try {
-      lineups = await MatchDetailsService().getMatchLineup(matchid);
+      final result = await MatchDetailsService().getMatchLineup(matchid);
+      lineups = result.lineups;
+      lineupUnavailable = result.noLineupAvailable;
+      debugPrint('PROVIDER LINEUP COUNT: ${lineups.length}');
+      debugPrint('PROVIDER LINEUP UNAVAILABLE: $lineupUnavailable');
     } catch (e) {
       debugPrint("Provider getMatchLineup Error: $e");
       lineups = [];
+      lineupError = "Unable to load lineup";
     }
     isLoadingLineup = false;
     notifyListeners();
@@ -196,16 +204,19 @@ class MatchProvider extends ChangeNotifier {
 
   List<HeadtoHead> h2h = [];
   bool isLoadingH2H = false;
+  String? h2hError;
 
   Future<void> geth2h({int? matchid}) async {
     if (matchid == null) return;
     isLoadingH2H = true;
+    h2hError = null;
     notifyListeners();
     try {
       h2h = await MatchDetailsService().getMatchH2H(matchid);
     } catch (e) {
       debugPrint("Provider geth2h Error: $e");
       h2h = [];
+      h2hError = "Unable to load head to head";
     }
     isLoadingH2H = false;
     notifyListeners();

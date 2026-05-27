@@ -435,6 +435,14 @@ class StartXiPlayer {
     this.number,
     this.pos,
     this.grid,
+    this.photo,
+    this.rating,
+    this.captain,
+    this.yellowCard,
+    this.redCard,
+    this.goal,
+    this.substitute,
+    this.injured,
   });
 
   int? id;
@@ -442,6 +450,14 @@ class StartXiPlayer {
   int? number;
   String? pos;
   String? grid;
+  String? photo;
+  double? rating;
+  bool? captain;
+  bool? yellowCard;
+  bool? redCard;
+  bool? goal;
+  bool? substitute;
+  bool? injured;
 
   factory StartXiPlayer.fromJson(Map<String, dynamic> json) => StartXiPlayer(
         id: json["id"],
@@ -449,6 +465,16 @@ class StartXiPlayer {
         number: json["number"],
         pos: json["pos"] == null ? null : json["pos"],
         grid: json["grid"] == null ? null : json["grid"],
+        photo: json["photo"] == null ? null : json["photo"],
+        rating: json["rating"] == null
+            ? null
+            : double.tryParse(json["rating"].toString()),
+        captain: json["captain"] == true || json["captain"] == 1,
+        yellowCard: json["yellowCard"] == true || json["yellow_card"] == true || json["yellow"] == true,
+        redCard: json["redCard"] == true || json["red_card"] == true || json["red"] == true,
+        goal: json["goal"] == true || (json["goals"] != null && json["goals"] > 0),
+        substitute: json["substitute"] == true || json["substituted"] == true,
+        injured: json["injured"] == true || json["injury"] == true,
       );
 
   Map<String, dynamic> toJson() => {
@@ -457,6 +483,14 @@ class StartXiPlayer {
         "number": number,
         "pos": pos == null ? null : pos,
         "grid": grid == null ? null : grid,
+        "photo": photo == null ? null : photo,
+        "rating": rating == null ? null : rating,
+        "captain": captain,
+        "yellowCard": yellowCard,
+        "redCard": redCard,
+        "goal": goal,
+        "substitute": substitute,
+        "injured": injured,
       };
 }
 
